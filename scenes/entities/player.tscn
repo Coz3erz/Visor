@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://31r2lbck61t1"]
+
+[ext_resource type="Script" uid="uid://bti1el713isn5" path="res://scripts/player.gd" id="1_ucweq"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_08t41"]
+
+[node name="player" type="CharacterBody3D" unique_id=977840029]
+axis_lock_angular_x = true
+axis_lock_angular_y = true
+axis_lock_angular_z = true
+script = ExtResource("1_ucweq")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1662035373]
+shape = SubResource("CapsuleShape3D_08t41")
+
+[node name="Neck" type="Node3D" parent="." unique_id=1945234408]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
+[node name="Camera" type="Camera3D" parent="Neck" unique_id=536906161]
+
+[node name="RayCast3D" type="RayCast3D" parent="Neck/Camera" unique_id=436328135]
+target_position = Vector3(0, 0, -40)
+
+[node name="GrappleRope" type="MeshInstance3D" parent="." unique_id=1796931104]
