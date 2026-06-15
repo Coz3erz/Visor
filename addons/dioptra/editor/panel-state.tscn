@@ -1,0 +1,131 @@
+[gd_scene load_steps=10 format=3 uid="uid://w4h7fd6pioos"]
+
+[ext_resource type="Texture2D" uid="uid://rqqlq11sn5sn" path="res://addons/dioptra/asset/default/select-cube.svg" id="2_65h2v"]
+[ext_resource type="Script" uid="uid://ca5l34adahm2i" path="res://addons/dioptra/editor/DP_PanelState.gd" id="2_tp8tb"]
+[ext_resource type="Texture2D" uid="uid://bnr2ljfbxq7pd" path="res://addons/dioptra/asset/default/select-face.svg" id="3_a21wj"]
+[ext_resource type="Texture2D" uid="uid://2f8k644wse8b" path="res://addons/dioptra/asset/default/select-edge.svg" id="4_dfuey"]
+[ext_resource type="Texture2D" uid="uid://dcqhv2mvdsl2m" path="res://addons/dioptra/asset/default/select-vertex.svg" id="5_oiw7u"]
+[ext_resource type="Texture2D" uid="uid://bldwjxgpbh06n" path="res://addons/dioptra/asset/default/tex-lock.svg" id="6_65h2v"]
+[ext_resource type="Texture2D" uid="uid://dfsw7dcdsi71y" path="res://addons/dioptra/asset/default/shading-wires.svg" id="7_dfuey"]
+[ext_resource type="Texture2D" uid="uid://bpclherpyaj1u" path="res://addons/dioptra/asset/default/shading-grid.svg" id="8_oiw7u"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_4mdk8"]
+resource_name = "select_mode"
+
+[node name="DP State" type="HFlowContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+script = ExtResource("2_tp8tb")
+
+[node name="Box" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Label_Select" type="Label" parent="Box"]
+layout_mode = 2
+text = "Select:"
+
+[node name="Selection" type="HBoxContainer" parent="Box"]
+layout_mode = 2
+
+[node name="Solid" type="Button" parent="Box/Selection"]
+layout_mode = 2
+tooltip_text = "Select solids (1)"
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("ButtonGroup_4mdk8")
+icon = ExtResource("2_65h2v")
+
+[node name="Face" type="Button" parent="Box/Selection"]
+layout_mode = 2
+tooltip_text = "Select faces (2)"
+toggle_mode = true
+button_group = SubResource("ButtonGroup_4mdk8")
+icon = ExtResource("3_a21wj")
+
+[node name="Edge" type="Button" parent="Box/Selection"]
+layout_mode = 2
+tooltip_text = "Select edges (3)"
+toggle_mode = true
+button_group = SubResource("ButtonGroup_4mdk8")
+icon = ExtResource("4_dfuey")
+
+[node name="Vertex" type="Button" parent="Box/Selection"]
+layout_mode = 2
+tooltip_text = "Select corners (4)"
+toggle_mode = true
+button_group = SubResource("ButtonGroup_4mdk8")
+icon = ExtResource("5_oiw7u")
+
+[node name="VSeparator" type="VSeparator" parent="Box"]
+layout_mode = 2
+
+[node name="Label_Editor" type="Label" parent="Box"]
+visible = false
+layout_mode = 2
+text = "Editor:"
+
+[node name="Editor" type="HBoxContainer" parent="Box"]
+layout_mode = 2
+
+[node name="TextureLock" type="Button" parent="Box/Editor"]
+layout_mode = 2
+tooltip_text = "Texture Lock.
+When moving solids, the editor will attempt to lock the texture by changing the offset and the rotation."
+disabled = true
+toggle_mode = true
+icon = ExtResource("6_65h2v")
+
+[node name="Button5" type="Button" parent="Box/Editor"]
+visible = false
+layout_mode = 2
+icon = ExtResource("5_oiw7u")
+
+[node name="Snapping" type="Button" parent="Box/Editor"]
+visible = false
+layout_mode = 2
+icon = ExtResource("5_oiw7u")
+
+[node name="SnapSize" type="SpinBox" parent="Box/Editor"]
+layout_mode = 2
+tooltip_text = "DP Units to snap to.
+DP unit to Godot unit conversion is controlled in the DP Settings."
+max_value = 1024.0
+value = 16.0
+rounded = true
+alignment = 1
+
+[node name="VSeparator2" type="VSeparator" parent="Box"]
+layout_mode = 2
+
+[node name="Label_View" type="Label" parent="Box"]
+visible = false
+layout_mode = 2
+text = "View:"
+
+[node name="View" type="HBoxContainer" parent="Box"]
+layout_mode = 2
+
+[node name="Wireframe" type="Button" parent="Box/View"]
+layout_mode = 2
+tooltip_text = "Show map wireframe"
+toggle_mode = true
+icon = ExtResource("7_dfuey")
+
+[node name="Grid" type="Button" parent="Box/View"]
+layout_mode = 2
+tooltip_text = "Show map grid"
+toggle_mode = true
+button_pressed = true
+icon = ExtResource("8_oiw7u")
+
+[connection signal="pressed" from="Box/Selection/Solid" to="." method="onSelectionTypePressed" binds= [0]]
+[connection signal="pressed" from="Box/Selection/Face" to="." method="onSelectionTypePressed" binds= [1]]
+[connection signal="pressed" from="Box/Selection/Edge" to="." method="onSelectionTypePressed" binds= [2]]
+[connection signal="pressed" from="Box/Selection/Vertex" to="." method="onSelectionTypePressed" binds= [3]]
+[connection signal="value_changed" from="Box/Editor/SnapSize" to="." method="on_grid_value_changed"]
+[connection signal="toggled" from="Box/View/Wireframe" to="." method="on_wire_vis_toggled"]
+[connection signal="toggled" from="Box/View/Grid" to="." method="on_grid_vis_toggled"]

@@ -11,13 +11,13 @@ config_version=5
 [application]
 
 config/name="KARLSON SCUFFED"
-run/main_scene="uid://b3utqeb8vqe0g"
+run/main_scene="res://scenes/main/tutorial.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [editor_plugins]
 
-enabled=PackedStringArray()
+enabled=PackedStringArray("res://addons/dioptra-geobuilder/plugin.cfg", "res://addons/dioptra/editor/maphelper/plugin.cfg", "res://addons/dioptra/editor/plugin.cfg", "res://addons/dioptra/node-types/plugin.cfg", "res://addons/dioptra/plugin.cfg", "res://addons/go_placer/plugin.cfg")
 
 [filesystem]
 

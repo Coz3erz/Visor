@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GoPlacerPalette" format=3 uid="uid://bqdsiguqko8ux"]
+
+[ext_resource type="Script" uid="uid://d1ysch78fa2rx" path="res://addons/go_placer/palette/go_placer_palette_entry.gd" id="1_3vloc"]
+[ext_resource type="PackedScene" uid="uid://b1u7xtoyrloes" path="res://scenes/objects/block.tscn" id="2_gawhh"]
+[ext_resource type="Script" uid="uid://b3ceq2butxeo7" path="res://addons/go_placer/palette/go_placer_palette.gd" id="2_p5pql"]
+
+[sub_resource type="Resource" id="Resource_amujv"]
+script = ExtResource("1_3vloc")
+asset = ExtResource("2_gawhh")
+display_name = "block"
+tags = PackedStringArray()
+
+[resource]
+script = ExtResource("2_p5pql")
+palette_name = "basic"
+entries = Array[ExtResource("1_3vloc")]([SubResource("Resource_amujv")])
