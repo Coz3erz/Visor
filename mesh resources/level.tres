@@ -5,3 +5,7 @@
 [resource]
 shading_mode = 0
 albedo_texture = ExtResource("1_ain3u")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv2_triplanar = true
+texture_filter = 0

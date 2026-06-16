@@ -10,14 +10,21 @@ config_version=5
 
 [application]
 
-config/name="KARLSON SCUFFED"
+config/name="Visor"
+config/description="Run from a tainted future."
 run/main_scene="res://scenes/main/tutorial.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://sprites/other/icon.svg"
+boot_splash/bg_color=Color(0, 0, 0, 1)
+boot_splash/image="uid://jf8htj8xie66"
+config/icon="uid://dpc3jga25bt22"
+
+[autoload]
+
+CyclopsAutoload="*res://addons/cyclops_level_builder/cyclops_global_scene.tscn"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/dioptra-geobuilder/plugin.cfg", "res://addons/dioptra/editor/maphelper/plugin.cfg", "res://addons/dioptra/editor/plugin.cfg", "res://addons/dioptra/node-types/plugin.cfg", "res://addons/dioptra/plugin.cfg")
+enabled=PackedStringArray("res://addons/cyclops_level_builder/plugin.cfg")
 
 [filesystem]
 
