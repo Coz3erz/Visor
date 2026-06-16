@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://31r2lbck61t1"]
 
-[ext_resource type="Script" uid="uid://bti1el713isn5" path="res://scripts/player.gd" id="1_ucweq"]
+[ext_resource type="Script" uid="uid://bti1el713isn5" path="res://scripts/entities/player.gd" id="1_ucweq"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_08t41"]
 
