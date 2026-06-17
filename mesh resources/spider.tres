@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://c3aivkpacqkuv"]
+
+[ext_resource type="Texture2D" uid="uid://bydta0bcsq32i" path="res://sprites/level/spider1.png" id="1_4o2bq"]
+
+[resource]
+shading_mode = 0
+albedo_texture = ExtResource("1_4o2bq")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv2_triplanar = true
+texture_filter = 0

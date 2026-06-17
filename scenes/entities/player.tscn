@@ -4,11 +4,16 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_08t41"]
 
-[node name="player" type="CharacterBody3D" unique_id=977840029]
+[node name="player" type="CharacterBody3D" unique_id=977840029 node_paths=PackedStringArray("head", "camera", "grapple_raycast", "collision_shape")]
 axis_lock_angular_x = true
 axis_lock_angular_y = true
 axis_lock_angular_z = true
 script = ExtResource("1_ucweq")
+head = NodePath("Neck")
+camera = NodePath("Neck/Camera")
+grapple_raycast = NodePath("Neck/Camera/RayCast3D")
+collision_shape = NodePath("CollisionShape3D")
+dash_cooldown = 0.1
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1662035373]
 shape = SubResource("CapsuleShape3D_08t41")
@@ -20,5 +25,3 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 
 [node name="RayCast3D" type="RayCast3D" parent="Neck/Camera" unique_id=436328135]
 target_position = Vector3(0, 0, -40)
-
-[node name="GrappleRope" type="MeshInstance3D" parent="." unique_id=1796931104]
