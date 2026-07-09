@@ -26,6 +26,17 @@ data = PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+[sub_resource type="Resource" id="Resource_a7cwe"]
+script = ExtResource("5_b7gba")
+data = PackedInt32Array(0, 0, 0, 0, 0, 0)
+data_type = 1
+
+[sub_resource type="Resource" id="Resource_m0o6r"]
+script = ExtResource("4_kk7s1")
+data = PackedFloat32Array(-1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0, 0, 0, -1)
+data_type = 6
+stride = 3
+
 [sub_resource type="Resource" id="Resource_2gtw6"]
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(0, 0, 0, 0, 0, 0)
@@ -34,25 +45,15 @@ data = PackedByteArray(0, 0, 0, 0, 0, 0)
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(1, 1, 1, 1, 1, 1)
 
-[sub_resource type="Resource" id="Resource_m0o6r"]
+[sub_resource type="Resource" id="Resource_bny1h"]
 script = ExtResource("4_kk7s1")
-data = PackedFloat32Array(-1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0, 0, 0, -1)
-data_type = 6
-stride = 3
-
-[sub_resource type="Resource" id="Resource_a7cwe"]
-script = ExtResource("5_b7gba")
-data = PackedInt32Array(0, 0, 0, 0, 0, 0)
-data_type = 1
+data = PackedFloat32Array(0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1)
+data_type = 4
+stride = 4
 
 [sub_resource type="Resource" id="Resource_ysykr"]
 script = ExtResource("5_b7gba")
 data = PackedInt32Array(0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5)
-data_type = 1
-
-[sub_resource type="Resource" id="Resource_iml36"]
-script = ExtResource("5_b7gba")
-data = PackedInt32Array(0, 1, 2, 3, 7, 6, 5, 4, 1, 0, 4, 5, 2, 1, 5, 6, 3, 2, 6, 7, 0, 3, 7, 4)
 data_type = 1
 
 [sub_resource type="Resource" id="Resource_apvie"]
@@ -65,27 +66,26 @@ stride = 3
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
-[sub_resource type="Resource" id="Resource_bny1h"]
-script = ExtResource("4_kk7s1")
-data = PackedFloat32Array(0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1, 0.33333334, 1, 1, 1)
-data_type = 4
-stride = 4
-
 [sub_resource type="Resource" id="Resource_r0l52"]
 script = ExtResource("4_kk7s1")
 data = PackedFloat32Array(48, 0, -64, 0, -64, 8, 48, 8, 48, 8, -64, 8, -64, 0, 48, 0, 8, -64, 8, 48, -64, 48, -64, -64, 8, 8, 8, 0, -64, 0, -64, 8, 8, 48, 8, -64, -64, -64, -64, 48, 8, 0, 8, 8, -64, 8, -64, 0)
 data_type = 5
 stride = 2
 
-[sub_resource type="Resource" id="Resource_rgiwn"]
-script = ExtResource("4_kk7s1")
-data = PackedFloat32Array(0, 8, 0, 0, 8, 112, 0, 0, 112, 0, 0, 0, 72, 8, 0, 72, 8, 112, 72, 0, 112, 72, 0, 0)
-data_type = 6
-stride = 3
+[sub_resource type="Resource" id="Resource_iml36"]
+script = ExtResource("5_b7gba")
+data = PackedInt32Array(0, 1, 2, 3, 7, 6, 5, 4, 1, 0, 4, 5, 2, 1, 5, 6, 3, 2, 6, 7, 0, 3, 7, 4)
+data_type = 1
 
 [sub_resource type="Resource" id="Resource_xqkur"]
 script = ExtResource("4_kk7s1")
 data = PackedFloat32Array(-0.11015429, 0.9913887, -0.07081348, -0.11015429, 0.9913887, 0.07081348, -0.11015429, -0.9913887, 0.07081348, -0.11015429, -0.9913887, -0.07081348, 0.11015429, 0.9913887, -0.07081348, 0.11015429, 0.9913887, 0.07081348, 0.11015429, -0.9913887, 0.07081348, 0.11015429, -0.9913887, -0.07081348)
+data_type = 6
+stride = 3
+
+[sub_resource type="Resource" id="Resource_rgiwn"]
+script = ExtResource("4_kk7s1")
+data = PackedFloat32Array(0, 8, 0, 0, 8, 112, 0, 0, 112, 0, 0, 0, 72, 8, 0, 72, 8, 112, 72, 0, 112, 72, 0, 0)
 data_type = 6
 stride = 3
 
@@ -139,6 +139,17 @@ data = PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+[sub_resource type="Resource" id="Resource_gipw3"]
+script = ExtResource("5_b7gba")
+data = PackedInt32Array(0, 0, 0, 0, 0, 0)
+data_type = 1
+
+[sub_resource type="Resource" id="Resource_jvmle"]
+script = ExtResource("4_kk7s1")
+data = PackedFloat32Array(-1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0, 0, 0, -1)
+data_type = 6
+stride = 3
+
 [sub_resource type="Resource" id="Resource_87bnb"]
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(0, 0, 0, 0, 0, 0)
@@ -147,25 +158,15 @@ data = PackedByteArray(0, 0, 0, 0, 0, 0)
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(1, 1, 1, 1, 1, 1)
 
-[sub_resource type="Resource" id="Resource_jvmle"]
+[sub_resource type="Resource" id="Resource_7ifdd"]
 script = ExtResource("4_kk7s1")
-data = PackedFloat32Array(-1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0, 0, 0, -1)
-data_type = 6
-stride = 3
-
-[sub_resource type="Resource" id="Resource_gipw3"]
-script = ExtResource("5_b7gba")
-data = PackedInt32Array(0, 0, 0, 0, 0, 0)
-data_type = 1
+data = PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+data_type = 4
+stride = 4
 
 [sub_resource type="Resource" id="Resource_lekeu"]
 script = ExtResource("5_b7gba")
 data = PackedInt32Array(0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5)
-data_type = 1
-
-[sub_resource type="Resource" id="Resource_d6l2n"]
-script = ExtResource("5_b7gba")
-data = PackedInt32Array(0, 1, 2, 3, 7, 6, 5, 4, 1, 0, 4, 5, 2, 1, 5, 6, 3, 2, 6, 7, 0, 3, 7, 4)
 data_type = 1
 
 [sub_resource type="Resource" id="Resource_b4icb"]
@@ -178,27 +179,26 @@ stride = 3
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
-[sub_resource type="Resource" id="Resource_7ifdd"]
-script = ExtResource("4_kk7s1")
-data = PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-data_type = 4
-stride = 4
-
 [sub_resource type="Resource" id="Resource_xi8g5"]
 script = ExtResource("4_kk7s1")
 data = PackedFloat32Array(-32, -16, -40, -16, -40, 0, -32, 0, -32, 0, -40, 0, -40, -16, -32, -16, -32, -40, -32, -32, -48, -32, -48, -40, -32, 0, -32, -16, -48, -16, -48, 0, -32, -32, -32, -40, -48, -40, -48, -32, -32, -16, -32, 0, -48, 0, -48, -16)
 data_type = 5
 stride = 2
 
-[sub_resource type="Resource" id="Resource_54neh"]
-script = ExtResource("4_kk7s1")
-data = PackedFloat32Array(0, 16, 0, 0, 16, 8, 0, 0, 8, 0, 0, 0, 16, 16, 0, 16, 16, 8, 16, 0, 8, 16, 0, 0)
-data_type = 6
-stride = 3
+[sub_resource type="Resource" id="Resource_d6l2n"]
+script = ExtResource("5_b7gba")
+data = PackedInt32Array(0, 1, 2, 3, 7, 6, 5, 4, 1, 0, 4, 5, 2, 1, 5, 6, 3, 2, 6, 7, 0, 3, 7, 4)
+data_type = 1
 
 [sub_resource type="Resource" id="Resource_n3n4g"]
 script = ExtResource("4_kk7s1")
 data = PackedFloat32Array(-0.40824828, 0.40824828, -0.81649655, -0.40824828, 0.40824828, 0.81649655, -0.40824828, -0.40824828, 0.81649655, -0.40824828, -0.40824828, -0.81649655, 0.40824828, 0.40824828, -0.81649655, 0.40824828, 0.40824828, 0.81649655, 0.40824828, -0.40824828, 0.81649655, 0.40824828, -0.40824828, -0.81649655)
+data_type = 6
+stride = 3
+
+[sub_resource type="Resource" id="Resource_54neh"]
+script = ExtResource("4_kk7s1")
+data = PackedFloat32Array(0, 16, 0, 0, 16, 8, 0, 0, 8, 0, 0, 0, 16, 16, 0, 16, 16, 8, 16, 0, 8, 16, 0, 0)
 data_type = 6
 stride = 3
 
@@ -252,6 +252,17 @@ data = PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+[sub_resource type="Resource" id="Resource_8xv4q"]
+script = ExtResource("5_b7gba")
+data = PackedInt32Array(0, 0, 0, 0, 0, 0)
+data_type = 1
+
+[sub_resource type="Resource" id="Resource_vjw6h"]
+script = ExtResource("4_kk7s1")
+data = PackedFloat32Array(-1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0, 0, 0, -1)
+data_type = 6
+stride = 3
+
 [sub_resource type="Resource" id="Resource_oo51n"]
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(0, 0, 0, 0, 0, 0)
@@ -260,25 +271,15 @@ data = PackedByteArray(0, 0, 0, 0, 0, 0)
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(1, 1, 1, 1, 1, 1)
 
-[sub_resource type="Resource" id="Resource_vjw6h"]
+[sub_resource type="Resource" id="Resource_0pe2v"]
 script = ExtResource("4_kk7s1")
-data = PackedFloat32Array(-1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0, 0, 0, -1)
-data_type = 6
-stride = 3
-
-[sub_resource type="Resource" id="Resource_8xv4q"]
-script = ExtResource("5_b7gba")
-data = PackedInt32Array(0, 0, 0, 0, 0, 0)
-data_type = 1
+data = PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+data_type = 4
+stride = 4
 
 [sub_resource type="Resource" id="Resource_cvcrt"]
 script = ExtResource("5_b7gba")
 data = PackedInt32Array(0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5)
-data_type = 1
-
-[sub_resource type="Resource" id="Resource_c7bcc"]
-script = ExtResource("5_b7gba")
-data = PackedInt32Array(0, 1, 2, 3, 7, 6, 5, 4, 1, 0, 4, 5, 2, 1, 5, 6, 3, 2, 6, 7, 0, 3, 7, 4)
 data_type = 1
 
 [sub_resource type="Resource" id="Resource_wiung"]
@@ -291,27 +292,26 @@ stride = 3
 script = ExtResource("3_1u6hg")
 data = PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
-[sub_resource type="Resource" id="Resource_0pe2v"]
-script = ExtResource("4_kk7s1")
-data = PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-data_type = 4
-stride = 4
-
 [sub_resource type="Resource" id="Resource_py1cr"]
 script = ExtResource("4_kk7s1")
 data = PackedFloat32Array(32, -32, 16, -32, 16, 0, 32, 0, 32, 0, 16, 0, 16, -32, 32, -32, 0, 16, 0, 32, -24, 32, -24, 16, 0, 0, 0, -32, -24, -32, -24, 0, 0, 32, 0, 16, -24, 16, -24, 32, 0, -32, 0, 0, -24, 0, -24, -32)
 data_type = 5
 stride = 2
 
-[sub_resource type="Resource" id="Resource_iegu6"]
-script = ExtResource("4_kk7s1")
-data = PackedFloat32Array(0, 32, 0, 0, 32, 16, 0, 0, 16, 0, 0, 0, 24, 32, 0, 24, 32, 16, 24, 0, 16, 24, 0, 0)
-data_type = 6
-stride = 3
+[sub_resource type="Resource" id="Resource_c7bcc"]
+script = ExtResource("5_b7gba")
+data = PackedInt32Array(0, 1, 2, 3, 7, 6, 5, 4, 1, 0, 4, 5, 2, 1, 5, 6, 3, 2, 6, 7, 0, 3, 7, 4)
+data_type = 1
 
 [sub_resource type="Resource" id="Resource_bsdpc"]
 script = ExtResource("4_kk7s1")
 data = PackedFloat32Array(-0.5121475, 0.38411063, -0.76822126, -0.5121475, 0.38411063, 0.76822126, -0.5121475, -0.38411063, 0.76822126, -0.5121475, -0.38411063, -0.76822126, 0.5121475, 0.38411063, -0.76822126, 0.5121475, 0.38411063, 0.76822126, 0.5121475, -0.38411063, 0.76822126, 0.5121475, -0.38411063, -0.76822126)
+data_type = 6
+stride = 3
+
+[sub_resource type="Resource" id="Resource_iegu6"]
+script = ExtResource("4_kk7s1")
+data = PackedFloat32Array(0, 32, 0, 0, 32, 16, 0, 0, 16, 0, 0, 0, 24, 32, 0, 24, 32, 16, 24, 0, 16, 24, 0, 0)
 data_type = 6
 stride = 3
 

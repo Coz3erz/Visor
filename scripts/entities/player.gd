@@ -308,15 +308,20 @@ func _draw_rope() -> void:
 	rope_mesh.clear_surfaces()
 	var space_state = get_world_3d().direct_space_state
 	var cam_forward = -camera.global_transform.basis.z
-	var hand_pos = camera.global_position + camera.global_transform.basis * Vector3(0.3, -0.3, -0.8)
+	
+	# Push the hand position further away from the camera so the rope start is hidden
+	var base_hand_offset = Vector3(0.3, -0.3, -1.0)
+	var hand_pos = camera.global_position + camera.global_transform.basis * base_hand_offset
+	
+	# If a wall is very close, push it forward so it doesn't clip through the camera
 	var probe_start = camera.global_position + cam_forward * 0.3
-	var probe_query = PhysicsRayQueryParameters3D.create(probe_start, probe_start + cam_forward * 0.8)
+	var probe_query = PhysicsRayQueryParameters3D.create(probe_start, probe_start + cam_forward * 1.0)
 	probe_query.exclude = [get_rid()]
 	var probe_result = space_state.intersect_ray(probe_query)
 	if probe_result:
 		var wall_dist = probe_result.position.distance_to(probe_start)
-		var push = clamp(0.8 - wall_dist, 0.1, 0.8)
-		hand_pos += cam_forward * push
+		if wall_dist < 1.2:
+			hand_pos = camera.global_position + cam_forward * (wall_dist - 0.15)
 
 	var polyline = [hand_pos]
 	for i in range(rope_wrap_points.size() - 1, -1, -1):
@@ -347,6 +352,12 @@ func _draw_rope() -> void:
 				break
 			cum += segment_lengths[seg_idx]
 		if not found: path_points.append(polyline.back())
+
+	# Remove the first point if it's very close to the next, hiding the start
+	if path_points.size() >= 2 and path_points[0].distance_to(path_points[1]) < 0.15:
+		path_points.remove_at(0)
+
+	if path_points.size() < 2: return
 
 	var sag = 0.12 if velocity.length() <= 5.0 else 0.03
 	var time_passed = Time.get_ticks_msec() / 1000.0
