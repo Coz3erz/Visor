@@ -308,20 +308,15 @@ func _draw_rope() -> void:
 	rope_mesh.clear_surfaces()
 	var space_state = get_world_3d().direct_space_state
 	var cam_forward = -camera.global_transform.basis.z
-	
-	# Push the hand position further away from the camera so the rope start is hidden
-	var base_hand_offset = Vector3(0.3, -0.3, -1.0)
-	var hand_pos = camera.global_position + camera.global_transform.basis * base_hand_offset
-	
-	# If a wall is very close, push it forward so it doesn't clip through the camera
-	var probe_start = camera.global_position + cam_forward * 0.3
-	var probe_query = PhysicsRayQueryParameters3D.create(probe_start, probe_start + cam_forward * 1.0)
-	probe_query.exclude = [get_rid()]
-	var probe_result = space_state.intersect_ray(probe_query)
-	if probe_result:
-		var wall_dist = probe_result.position.distance_to(probe_start)
-		if wall_dist < 1.2:
-			hand_pos = camera.global_position + cam_forward * (wall_dist - 0.15)
+
+	var wall_query = PhysicsRayQueryParameters3D.create(camera.global_position, camera.global_position + cam_forward * 1.5)
+	wall_query.exclude = [get_rid()]
+	var wall_result = space_state.intersect_ray(wall_query)
+	var safe_dist = 1.2
+	if wall_result:
+		safe_dist = clamp(camera.global_position.distance_to(wall_result.position) - 0.15, 0.3, 1.2)
+
+	var hand_pos = camera.global_position + cam_forward * safe_dist + camera.global_transform.basis * Vector3(0.3, -0.3, 0.0)
 
 	var polyline = [hand_pos]
 	for i in range(rope_wrap_points.size() - 1, -1, -1):
@@ -353,10 +348,6 @@ func _draw_rope() -> void:
 			cum += segment_lengths[seg_idx]
 		if not found: path_points.append(polyline.back())
 
-	# Remove the first point if it's very close to the next, hiding the start
-	if path_points.size() >= 2 and path_points[0].distance_to(path_points[1]) < 0.15:
-		path_points.remove_at(0)
-
 	if path_points.size() < 2: return
 
 	var sag = 0.12 if velocity.length() <= 5.0 else 0.03
@@ -380,14 +371,11 @@ func _draw_rope() -> void:
 		if abs(fwd.dot(up)) > 0.99: up = Vector3.FORWARD
 		var right = fwd.cross(up).normalized()
 		var ortho_up = right.cross(fwd).normalized()
-		var radius = ROPE_RADIUS
-		if i == 0:
-			radius = 0.0
 		var ring = []
 		for j in range(ROPE_RADIAL_STEPS):
 			var angle = float(j) * 2.0 * PI / ROPE_RADIAL_STEPS
 			var normal_dir = (right * cos(angle) + ortho_up * sin(angle)).normalized()
-			var vertex_pos = current + normal_dir * radius
+			var vertex_pos = current + normal_dir * ROPE_RADIUS
 			ring.append({"pos": vertex_pos, "normal": normal_dir})
 		rings.append(ring)
 	for i in range(rings.size() - 1):
