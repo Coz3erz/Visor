@@ -24,7 +24,7 @@ CyclopsAutoload="*uid://4siqre3jhe80"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/cyclops_level_builder/plugin.cfg", "res://addons/destrohook/plugin.cfg")
+enabled=PackedStringArray("res://addons/cyclops_level_builder/plugin.cfg")
 
 [filesystem]
 
