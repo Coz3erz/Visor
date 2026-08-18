@@ -9,16 +9,15 @@
 axis_lock_angular_x = true
 axis_lock_angular_y = true
 axis_lock_angular_z = true
+floor_max_angle = 1.2566371
 script = ExtResource("1_ucweq")
 head = NodePath("Neck")
 camera = NodePath("Neck/Camera")
 collision_shape = NodePath("CollisionShape3D")
-air_tilt_reduction = 0.6
+air_tilt_reduction = 1.0
 wall_jump_pushback = 6.0
-shake_decay = 30.0
-max_shake_offset = 5.0
 slam_down_speed = 80.0
-slam_landing_boost = 20.0
+slam_landing_boost = 0.0
 max_fov_boost = 20.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1662035373]

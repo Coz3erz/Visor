@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://12on50rw3m7u"]
+
+[ext_resource type="Texture2D" uid="uid://dffptcsoyfn4g" path="res://sprites/level/wall_2.png" id="1_ji1xf"]
+
+[resource]
+shading_mode = 0
+albedo_texture = ExtResource("1_ji1xf")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv2_triplanar = true
+texture_filter = 0

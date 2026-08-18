@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://yfxbt4le1c2d"]
+
+[ext_resource type="Script" uid="uid://dpkqb18svabl2" path="res://scripts/menu nodes/color_rect.gd" id="1_5vafy"]
+[ext_resource type="FontFile" uid="uid://fi8agfcutp6" path="res://resources/fonts/RASKHAL.ttf" id="2_byqcc"]
+[ext_resource type="Script" uid="uid://ccthwoxo02qjm" path="res://scripts/menu nodes/logo.gd" id="3_byqcc"]
+
+[node name="main_menu" type="Node2D" unique_id=1727335931]
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=21773488]
+offset_left = -1300.0
+offset_top = -793.0
+offset_right = 2570.0
+offset_bottom = 1763.0
+color = Color(0, 0, 0, 1)
+script = ExtResource("1_5vafy")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="." unique_id=2097388660]
+offset_left = 45.0
+offset_top = 39.0
+offset_right = 469.0
+offset_bottom = 265.0
+theme_override_fonts/normal_font = ExtResource("2_byqcc")
+theme_override_font_sizes/normal_font_size = 160
+bbcode_enabled = true
+text = "VISOR "
+script = ExtResource("3_byqcc")

@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://b736b84qwkeb1"]
+
+[ext_resource type="Texture2D" uid="uid://rw85kjq6fugc" path="res://sprites/level/chess2.png" id="1_ou4dk"]
+
+[resource]
+shading_mode = 0
+albedo_texture = ExtResource("1_ou4dk")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv2_triplanar = true
+texture_filter = 0
