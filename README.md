@@ -1,5 +1,3 @@
-this game is really unfinished , don't expect much :3
-
 # how to play
 
 1) if you do not have GODOT engine 4.6.1 stable , download it from the official GODOT website > https://godotengine.org/
