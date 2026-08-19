@@ -53,7 +53,7 @@ secondary_ring_color = Color(0.11064523, 0.018671855, 0.13172773, 1)
 bleed = 7.0
 ring_speed = 0.1
 secondary_ring_speed = 0.4
-circle_correction = 3.14
+circle_correction = 2.3
 
 [node name="play" type="Button" parent="GUI" unique_id=1873209124]
 layout_mode = 0
@@ -79,15 +79,8 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_1a37c")
 text = "PLAY"
 script = ExtResource("4_swlpu")
 button_text = "PLAY"
-font_size = 78
+font_size = 80
 text_color = Color(0.23137255, 0.22352941, 1, 1)
-base_glitch_intensity = 0.4
-chromatic_offset = 0.1
-static_line_density = 60.0
-static_line_speed = 30.0
-glitch_burst_rate = 4.0
-glitch_burst_strength = 0.1
-glitch_burst_duration = 0.2
 
 [node name="Logo" type="Sprite2D" parent="." unique_id=1580751055]
 position = Vector2(584.0001, 196)

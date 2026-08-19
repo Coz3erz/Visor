@@ -31,8 +31,12 @@ func _ready() -> void:
 	add_theme_stylebox_override("hover", StyleBoxEmpty.new())
 	add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
 	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	add_theme_stylebox_override("disabled", StyleBoxEmpty.new())
 
-	# Create centered label
+	flat = true
+	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+	# Create label for visual text (button's own text remains empty)
 	label = Label.new()
 	label.text = button_text
 	label.add_theme_font_size_override("font_size", font_size)
@@ -43,22 +47,22 @@ func _ready() -> void:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(label)
 
-	# Shader material on label (affects only text)
+	# Apply shader to label (affects only the glyphs)
 	shader_material = ShaderMaterial.new()
 	shader_material.shader = _create_shader()
 	label.material = shader_material
 
-	# Hover signals
-	mouse_entered.connect(_on_mouse_entered)
-	mouse_exited.connect(_on_mouse_exited)
-
-	# Size to label minimum size
+	# Resize button to fit label
 	size = label.get_minimum_size()
 
 	# Initial positioning
 	if auto_center:
 		_center_button()
 		get_viewport().size_changed.connect(_center_button)
+
+	# Hover signals
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
 
 	_update_shader_params()
 
