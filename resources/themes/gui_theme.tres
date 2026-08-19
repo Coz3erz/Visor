@@ -1,0 +1,7 @@
+[gd_resource type="Theme" format=3 uid="uid://cp701b2d7s1wf"]
+
+[ext_resource type="FontFile" uid="uid://gy87se2rfcjl" path="res://resources/fonts/Cynatar.otf" id="1_xwpnd"]
+
+[resource]
+default_font = ExtResource("1_xwpnd")
+default_font_size = 80

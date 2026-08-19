@@ -1,26 +1,112 @@
 [gd_scene format=3 uid="uid://yfxbt4le1c2d"]
 
 [ext_resource type="Script" uid="uid://dpkqb18svabl2" path="res://scripts/menu nodes/color_rect.gd" id="1_5vafy"]
-[ext_resource type="FontFile" uid="uid://fi8agfcutp6" path="res://resources/fonts/RASKHAL.ttf" id="2_byqcc"]
+[ext_resource type="Texture2D" uid="uid://dyeri5nh12rl2" path="res://sprites/logos/visor_upscaled.png" id="2_byqcc"]
 [ext_resource type="Script" uid="uid://ccthwoxo02qjm" path="res://scripts/menu nodes/logo.gd" id="3_byqcc"]
+[ext_resource type="Theme" uid="uid://cp701b2d7s1wf" path="res://resources/themes/gui_theme.tres" id="4_hiibk"]
+[ext_resource type="Script" uid="uid://o37lrbjf1c5y" path="res://scripts/menu nodes/button.gd" id="4_swlpu"]
+[ext_resource type="FontFile" uid="uid://gy87se2rfcjl" path="res://resources/fonts/Cynatar.otf" id="5_swlpu"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nm0l4"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bxtry"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_75pso"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cnht7"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_s2sug"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ygj4d"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_001j1"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_rf05u"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_7orsx"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_pkvy1"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1a37c"]
 
 [node name="main_menu" type="Node2D" unique_id=1727335931]
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=21773488]
-offset_left = -1300.0
-offset_top = -793.0
-offset_right = 2570.0
-offset_bottom = 1763.0
+[node name="GUI" type="Control" parent="." unique_id=1251026905]
+layout_mode = 3
+anchors_preset = 0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Background" type="ColorRect" parent="GUI" unique_id=21773488]
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 0
+offset_left = -1243.0
+offset_top = -686.0
+offset_right = 2627.0
+offset_bottom = 1870.0
 color = Color(0, 0, 0, 1)
 script = ExtResource("1_5vafy")
+base_glow_color = Color(0, 0, 0, 1)
+ring_color = Color(2.5027991e-06, 0.0655662, 0.2517734, 1)
+secondary_ring_color = Color(0.11064523, 0.018671855, 0.13172773, 1)
+bleed = 7.0
+ring_speed = 0.1
+secondary_ring_speed = 0.4
+circle_correction = 3.14
 
-[node name="RichTextLabel" type="RichTextLabel" parent="." unique_id=2097388660]
-offset_left = 45.0
-offset_top = 39.0
-offset_right = 469.0
-offset_bottom = 265.0
-theme_override_fonts/normal_font = ExtResource("2_byqcc")
-theme_override_font_sizes/normal_font_size = 160
-bbcode_enabled = true
-text = "VISOR "
+[node name="play" type="Button" parent="GUI" unique_id=1873209124]
+layout_mode = 0
+offset_left = 402.0
+offset_top = 341.0
+offset_right = 685.0
+offset_bottom = 446.0
+theme = ExtResource("4_hiibk")
+theme_override_constants/outline_size = 0
+theme_override_fonts/font = ExtResource("5_swlpu")
+theme_override_font_sizes/font_size = 78
+theme_override_styles/normal = SubResource("StyleBoxEmpty_nm0l4")
+theme_override_styles/normal_mirrored = SubResource("StyleBoxEmpty_bxtry")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_75pso")
+theme_override_styles/pressed_mirrored = SubResource("StyleBoxEmpty_cnht7")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_s2sug")
+theme_override_styles/hover_mirrored = SubResource("StyleBoxEmpty_ygj4d")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_001j1")
+theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxEmpty_rf05u")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_7orsx")
+theme_override_styles/disabled_mirrored = SubResource("StyleBoxEmpty_pkvy1")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_1a37c")
+text = "PLAY"
+script = ExtResource("4_swlpu")
+button_text = "PLAY"
+font_size = 78
+text_color = Color(0.23137255, 0.22352941, 1, 1)
+base_glitch_intensity = 0.4
+chromatic_offset = 0.1
+static_line_density = 60.0
+static_line_speed = 30.0
+glitch_burst_rate = 4.0
+glitch_burst_strength = 0.1
+glitch_burst_duration = 0.2
+
+[node name="Logo" type="Sprite2D" parent="." unique_id=1580751055]
+position = Vector2(584.0001, 196)
+scale = Vector2(0.76722443, 0.7672243)
+texture = ExtResource("2_byqcc")
 script = ExtResource("3_byqcc")
+enable_bounce = false
+rotation_speed = 0.0
+rotation_amplitude = 0.0
+rotation_offset = 0.0
+scale_duration = 10.0
+min_scale = 1.0
+max_scale = 1.3
+scale_smoothing = 1.0
+ghost_offset = 0.006
+ghost_pulse_speed = 4.0
+ghost_intensity = 1.2
+static_line_density = 300.0
+static_line_intensity = 0.8
+static_line_beyond_intensity = 4.0
+glitch_burst_strength = 0.06
+logo_offset = Vector2(0, -250)
