@@ -80,7 +80,11 @@ text = "PLAY"
 script = ExtResource("4_swlpu")
 button_text = "PLAY"
 font_size = 80
-text_color = Color(0.23137255, 0.22352941, 1, 1)
+text_color = Color(0.52442414, 0.62412643, 1, 1)
+normal_intensity = 0.04
+chromatic_offset = 4.0
+static_line_count = 7
+burst_rate = 2.0
 
 [node name="Logo" type="Sprite2D" parent="." unique_id=1580751055]
 position = Vector2(584.0001, 196)
