@@ -131,7 +131,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-
+		SceneManager.change_scene("res://scenes/main/main_menu.tscn")
 	if event.is_action_pressed("ui_fullscreen"):
 		_toggle_fullscreen()
 

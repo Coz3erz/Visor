@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Visor"
 config/description="Run from a tainted future."
-run/main_scene="res://scenes/main/tutorial.tscn"
+run/main_scene="uid://yfxbt4le1c2d"
 config/features=PackedStringArray("4.6", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 1)
 boot_splash/image="uid://jf8htj8xie66"
@@ -21,6 +21,7 @@ config/icon="uid://dpc3jga25bt22"
 [autoload]
 
 CyclopsAutoload="*uid://4siqre3jhe80"
+SceneManager="*uid://b4g6tq627e4ti"
 
 [editor_plugins]
 

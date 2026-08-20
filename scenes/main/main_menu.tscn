@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://yfxbt4le1c2d"]
 
 [ext_resource type="Script" uid="uid://dpkqb18svabl2" path="res://scripts/menu nodes/color_rect.gd" id="1_5vafy"]
+[ext_resource type="Script" uid="uid://cwwegro8bffoc" path="res://scripts/menu nodes/main_menu.gd" id="1_nm0l4"]
 [ext_resource type="Texture2D" uid="uid://dyeri5nh12rl2" path="res://sprites/logos/visor_upscaled.png" id="2_byqcc"]
 [ext_resource type="Script" uid="uid://ccthwoxo02qjm" path="res://scripts/menu nodes/logo.gd" id="3_byqcc"]
 [ext_resource type="Theme" uid="uid://cp701b2d7s1wf" path="res://resources/themes/gui_theme.tres" id="4_hiibk"]
@@ -30,6 +31,7 @@
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1a37c"]
 
 [node name="main_menu" type="Node2D" unique_id=1727335931]
+script = ExtResource("1_nm0l4")
 
 [node name="GUI" type="Control" parent="." unique_id=1251026905]
 layout_mode = 3
@@ -80,11 +82,86 @@ text = "PLAY"
 script = ExtResource("4_swlpu")
 button_text = "PLAY"
 font_size = 80
-text_color = Color(0.52442414, 0.62412643, 1, 1)
+text_color = Color(0.5254902, 0.62352943, 1, 1)
+text_hover_color = Color(0.6901961, 0.25882354, 0.8117647, 1)
 normal_intensity = 0.04
 chromatic_offset = 4.0
-static_line_count = 7
 burst_rate = 2.0
+max_static_lines = 6
+static_line_height = 0.7
+static_line_opacity = 0.3
+static_dispersion_x = 85.0
+static_dispersion_y = 40.0
+
+[node name="extras" type="Button" parent="GUI" unique_id=2060240425]
+layout_mode = 0
+offset_left = 402.0
+offset_top = 534.0
+offset_right = 691.0
+offset_bottom = 639.0
+theme = ExtResource("4_hiibk")
+theme_override_constants/outline_size = 0
+theme_override_fonts/font = ExtResource("5_swlpu")
+theme_override_font_sizes/font_size = 78
+theme_override_styles/normal = SubResource("StyleBoxEmpty_nm0l4")
+theme_override_styles/normal_mirrored = SubResource("StyleBoxEmpty_bxtry")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_75pso")
+theme_override_styles/pressed_mirrored = SubResource("StyleBoxEmpty_cnht7")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_s2sug")
+theme_override_styles/hover_mirrored = SubResource("StyleBoxEmpty_ygj4d")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_001j1")
+theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxEmpty_rf05u")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_7orsx")
+theme_override_styles/disabled_mirrored = SubResource("StyleBoxEmpty_pkvy1")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_1a37c")
+text = "EXTRAS"
+script = ExtResource("4_swlpu")
+button_text = "EXTRAS"
+font_size = 80
+text_color = Color(0.52442414, 0.62412643, 1, 1)
+text_hover_color = Color(0.6901961, 0.25882354, 0.8117647, 1)
+normal_intensity = 0.04
+chromatic_offset = 4.0
+burst_rate = 2.0
+static_line_height = 0.7
+static_line_opacity = 0.3
+static_dispersion_x = 150.0
+screen_offset = Vector2(0, 240)
+
+[node name="options" type="Button" parent="GUI" unique_id=955749059]
+layout_mode = 0
+offset_left = 402.0
+offset_top = 435.0
+offset_right = 691.0
+offset_bottom = 540.0
+theme = ExtResource("4_hiibk")
+theme_override_constants/outline_size = 0
+theme_override_fonts/font = ExtResource("5_swlpu")
+theme_override_font_sizes/font_size = 78
+theme_override_styles/normal = SubResource("StyleBoxEmpty_nm0l4")
+theme_override_styles/normal_mirrored = SubResource("StyleBoxEmpty_bxtry")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_75pso")
+theme_override_styles/pressed_mirrored = SubResource("StyleBoxEmpty_cnht7")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_s2sug")
+theme_override_styles/hover_mirrored = SubResource("StyleBoxEmpty_ygj4d")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_001j1")
+theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxEmpty_rf05u")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_7orsx")
+theme_override_styles/disabled_mirrored = SubResource("StyleBoxEmpty_pkvy1")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_1a37c")
+text = "OPTIONS"
+script = ExtResource("4_swlpu")
+button_text = "OPTIONS"
+font_size = 80
+text_color = Color(0.52442414, 0.62412643, 1, 1)
+text_hover_color = Color(0.6901961, 0.25882354, 0.8117647, 1)
+normal_intensity = 0.04
+chromatic_offset = 4.0
+burst_rate = 2.0
+static_line_height = 0.7
+static_line_opacity = 0.3
+static_dispersion_x = 170.0
+screen_offset = Vector2(0, 120)
 
 [node name="Logo" type="Sprite2D" parent="." unique_id=1580751055]
 position = Vector2(584.0001, 196)
@@ -107,3 +184,7 @@ static_line_intensity = 0.8
 static_line_beyond_intensity = 4.0
 glitch_burst_strength = 0.06
 logo_offset = Vector2(0, -250)
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="." unique_id=532653510]
+
+[connection signal="pressed" from="GUI/play" to="." method="_on_play_pressed"]
