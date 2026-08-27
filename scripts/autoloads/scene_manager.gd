@@ -9,9 +9,9 @@ extends Node
 
 @export_category("Appearance")
 @export var text_color: Color = Color(0.0, 1.0, 0.0, 1.0)
-@export var cell_width: float = 16.0
-@export var cell_height: float = 16.0
-@export var font_size: int = 16
+@export var cell_width: float = 24.0
+@export var cell_height: float = 24.0
+@export var font_size: int = 24
 @export var gibberish_chars: String = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};:,.<>/?\\|"
 
 @export_category("Canvas")
