@@ -93,41 +93,6 @@ static_line_opacity = 0.3
 static_dispersion_x = 85.0
 static_dispersion_y = 40.0
 
-[node name="extras" type="Button" parent="GUI" unique_id=2060240425]
-layout_mode = 0
-offset_left = 402.0
-offset_top = 534.0
-offset_right = 691.0
-offset_bottom = 639.0
-theme = ExtResource("4_hiibk")
-theme_override_constants/outline_size = 0
-theme_override_fonts/font = ExtResource("5_swlpu")
-theme_override_font_sizes/font_size = 78
-theme_override_styles/normal = SubResource("StyleBoxEmpty_nm0l4")
-theme_override_styles/normal_mirrored = SubResource("StyleBoxEmpty_bxtry")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_75pso")
-theme_override_styles/pressed_mirrored = SubResource("StyleBoxEmpty_cnht7")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_s2sug")
-theme_override_styles/hover_mirrored = SubResource("StyleBoxEmpty_ygj4d")
-theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_001j1")
-theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxEmpty_rf05u")
-theme_override_styles/disabled = SubResource("StyleBoxEmpty_7orsx")
-theme_override_styles/disabled_mirrored = SubResource("StyleBoxEmpty_pkvy1")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_1a37c")
-text = "EXTRAS"
-script = ExtResource("4_swlpu")
-button_text = "EXTRAS"
-font_size = 80
-text_color = Color(0.52442414, 0.62412643, 1, 1)
-text_hover_color = Color(0.6901961, 0.25882354, 0.8117647, 1)
-normal_intensity = 0.04
-chromatic_offset = 4.0
-burst_rate = 2.0
-static_line_height = 0.7
-static_line_opacity = 0.3
-static_dispersion_x = 150.0
-screen_offset = Vector2(0, 240)
-
 [node name="options" type="Button" parent="GUI" unique_id=955749059]
 layout_mode = 0
 offset_left = 402.0
@@ -163,6 +128,41 @@ static_line_opacity = 0.3
 static_dispersion_x = 170.0
 screen_offset = Vector2(0, 120)
 
+[node name="extras" type="Button" parent="GUI" unique_id=2060240425]
+layout_mode = 0
+offset_left = 402.0
+offset_top = 534.0
+offset_right = 691.0
+offset_bottom = 639.0
+theme = ExtResource("4_hiibk")
+theme_override_constants/outline_size = 0
+theme_override_fonts/font = ExtResource("5_swlpu")
+theme_override_font_sizes/font_size = 78
+theme_override_styles/normal = SubResource("StyleBoxEmpty_nm0l4")
+theme_override_styles/normal_mirrored = SubResource("StyleBoxEmpty_bxtry")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_75pso")
+theme_override_styles/pressed_mirrored = SubResource("StyleBoxEmpty_cnht7")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_s2sug")
+theme_override_styles/hover_mirrored = SubResource("StyleBoxEmpty_ygj4d")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_001j1")
+theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxEmpty_rf05u")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_7orsx")
+theme_override_styles/disabled_mirrored = SubResource("StyleBoxEmpty_pkvy1")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_1a37c")
+text = "EXTRAS"
+script = ExtResource("4_swlpu")
+button_text = "EXTRAS"
+font_size = 80
+text_color = Color(0.52442414, 0.62412643, 1, 1)
+text_hover_color = Color(0.6901961, 0.25882354, 0.8117647, 1)
+normal_intensity = 0.04
+chromatic_offset = 4.0
+burst_rate = 2.0
+static_line_height = 0.7
+static_line_opacity = 0.3
+static_dispersion_x = 150.0
+screen_offset = Vector2(0, 240)
+
 [node name="Logo" type="Sprite2D" parent="." unique_id=1580751055]
 position = Vector2(584.0001, 196)
 scale = Vector2(0.76722443, 0.7672243)
@@ -185,6 +185,8 @@ static_line_beyond_intensity = 4.0
 glitch_burst_strength = 0.06
 logo_offset = Vector2(0, -250)
 
-[node name="CPUParticles2D" type="CPUParticles2D" parent="." unique_id=532653510]
+[node name="particles" type="CPUParticles2D" parent="." unique_id=532653510]
+emitting = false
 
 [connection signal="pressed" from="GUI/play" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="GUI/options" to="." method="_on_options_pressed"]

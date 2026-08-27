@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://bouj5umk2va5g"]
+
+[ext_resource type="Script" uid="uid://cv0c7lpoh4xle" path="res://scripts/menu nodes/options_menu.gd" id="1_evjuv"]
+
+[node name="options_menu" type="Control" unique_id=653451399]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_evjuv")
+reveal_speed = 3.0

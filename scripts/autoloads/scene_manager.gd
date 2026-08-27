@@ -1,17 +1,17 @@
 extends Node
 
-## SceneManager – autoload singleton for scene switching with hacker-style text transition.
-
 @export_category("Transition")
-@export var char_fill_time: float = 0.7
-@export var hold_time: float = 0.1
-@export var char_clear_time: float = 0.5
+@export var transition_fps: float = 12.0
+@export var char_fill_time: float = 0.6
+@export var hold_time: float = 0.4
+@export var char_clear_time: float = 0.6
+@export var extra_rows: int = 10
 
 @export_category("Appearance")
-@export var text_color: Color = Color(0.0, 0.999, 0.0, 1.0)
-@export var cell_width: float = 20.0
-@export var cell_height: float = 20.0
-@export var font_size: int = 20
+@export var text_color: Color = Color(0.0, 1.0, 0.0, 1.0)
+@export var cell_width: float = 16.0
+@export var cell_height: float = 16.0
+@export var font_size: int = 16
 @export var gibberish_chars: String = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};:,.<>/?\\|"
 
 @export_category("Canvas")
@@ -19,7 +19,9 @@ extends Node
 
 var canvas_layer: CanvasLayer
 var text_control: TransitionText
+var transition_timer: Timer
 var is_transitioning: bool = false
+var previous_scene_path: String = ""
 
 func _ready() -> void:
 	canvas_layer = CanvasLayer.new()
@@ -38,28 +40,28 @@ func _ready() -> void:
 	text_control.reverse_draw = false
 	canvas_layer.add_child(text_control)
 
+	transition_timer = Timer.new()
+	transition_timer.wait_time = 1.0 / transition_fps
+	transition_timer.autostart = false
+	transition_timer.timeout.connect(_on_transition_tick)
+	add_child(transition_timer)
+
 func change_scene(scene_path: String) -> void:
 	if is_transitioning:
 		return
 	is_transitioning = true
+	previous_scene_path = get_tree().current_scene.scene_file_path
 	await _cover_screen()
 	get_tree().change_scene_to_file(scene_path)
 	await _settle_scene()
 	await _uncover_screen()
 	is_transitioning = false
 
-func change_scene_to_packed(scene: PackedScene) -> void:
-	if is_transitioning:
-		return
-	is_transitioning = true
-	await _cover_screen()
-	get_tree().change_scene_to_packed(scene)
-	await _settle_scene()
-	await _uncover_screen()
-	is_transitioning = false
-
-func reload_current_scene() -> void:
-	await change_scene(get_tree().current_scene.scene_file_path)
+func return_to_previous_scene() -> void:
+	if previous_scene_path != "":
+		change_scene(previous_scene_path)
+	else:
+		change_scene("res://scenes/main/main_menu.tscn")
 
 func _settle_scene() -> void:
 	for i in range(5):
@@ -69,36 +71,48 @@ func _cover_screen() -> void:
 	text_control.visible = true
 	text_control.char_fill = 0.0
 	text_control.reverse_draw = false
+	text_control.extra_rows = extra_rows
+	transition_timer.start()
 	var tween = create_tween()
 	tween.tween_property(text_control, "char_fill", 1.0, char_fill_time)
 	await tween.finished
+	text_control.char_fill = 1.0
+	transition_timer.stop()
+	await get_tree().create_timer(0.1).timeout
 	await get_tree().create_timer(hold_time).timeout
 
 func _uncover_screen() -> void:
 	text_control.reverse_draw = true
+	text_control.extra_rows = extra_rows
+	transition_timer.start()
 	var tween = create_tween()
 	tween.tween_property(text_control, "char_fill", 0.0, char_clear_time)
 	await tween.finished
+	transition_timer.stop()
+	await get_tree().create_timer(0.1).timeout
 	text_control.visible = false
 	text_control.reverse_draw = false
 	text_control.char_fill = 0.0
 
+func _on_transition_tick() -> void:
+	text_control.queue_redraw()
+
 class TransitionText extends Control:
 	var font: Font
 	var rng := RandomNumberGenerator.new()
-	var font_size: int = 12
-	var cell_width: float = 10.0
+	var font_size: int = 16
+	var cell_width: float = 16.0
 	var cell_height: float = 16.0
 	var text_color: Color = Color(0.0, 1.0, 0.0, 1.0)
 	var gibberish_chars: String = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};:,.<>/?\\|"
-	
-	var char_fill: float = 0.0   # 0..1 – overall fill progress
+	var char_fill: float = 0.0
 	var reverse_draw: bool = false
 	var column_offsets: Array[int] = []
 	var viewport_size: Vector2 = Vector2.ZERO
+	var extra_rows: int = 0
 
 	func _ready() -> void:
-		set_process(true)
+		set_process(false)
 		rng.randomize()
 		font = SystemFont.new()
 		font.font_names = PackedStringArray(["Courier New", "monospace"])
@@ -115,11 +129,7 @@ class TransitionText extends Control:
 		var cols = int(ceil(viewport_size.x / cell_width))
 		column_offsets.clear()
 		for i in range(cols):
-			# 0, 1, or 2 extra characters of randomness per column
-			column_offsets.append(rng.randi_range(0, 4))
-
-	func _process(_delta: float) -> void:
-		queue_redraw()
+			column_offsets.append(rng.randi_range(0, 2))
 
 	func _draw() -> void:
 		if char_fill <= 0.0 or viewport_size == Vector2.ZERO:
@@ -134,24 +144,18 @@ class TransitionText extends Control:
 		for col in range(cols_total):
 			var visible_rows = base_rows
 			if reverse_draw:
-				# Top-to-bottom disappearance: keep bottom rows visible,
-				# but with the same column offsets to keep the leading edge ragged.
-				visible_rows = max(0, base_rows - column_offsets[col])
-				# For reverse, draw from bottom up.
+				visible_rows = max(0, base_rows - column_offsets[col] - extra_rows)
 				var start_row = rows_total - visible_rows
 				for r in range(start_row, rows_total):
-					_draw_cell(col, r, cols_total, rows_total)
+					_draw_cell(col, r)
 			else:
-				# Top-to-bottom fill: add offsets to front columns.
-				visible_rows = min(rows_total, base_rows + column_offsets[col])
+				visible_rows = min(rows_total, base_rows + column_offsets[col] + extra_rows)
 				for r in range(visible_rows):
-					_draw_cell(col, r, cols_total, rows_total)
+					_draw_cell(col, r)
 
-	func _draw_cell(col: int, row: int, cols_total: int, rows_total: int) -> void:
+	func _draw_cell(col: int, row: int) -> void:
 		var x = col * cell_width
 		var y = row * cell_height
-		# Black background
 		draw_rect(Rect2(x, y, cell_width, cell_height), Color.BLACK)
-		# Random character
 		var char_str = gibberish_chars[rng.randi_range(0, gibberish_chars.length() - 1)]
 		draw_string(font, Vector2(x, y + cell_height * 0.8), char_str, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, text_color)
