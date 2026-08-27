@@ -7,10 +7,20 @@ extends Control
 @export var dim_color: Color = Color(0.5, 0.5, 0.5)
 @export var prompt_char: String = "> "
 
-# Glow effect settings
-@export var glow_color: Color = Color(0.2, 0.6, 1.0, 0.3)
-@export var glow_offset: float = 1.0
-@export var glow_intensity: float = 0.25
+# Glow / Ocean Ripple (shader-based)
+@export var base_glow_color: Color = Color(0.0, 0.08, 0.35, 1.0)
+@export var ring_color: Color = Color(0.0, 0.2, 0.6, 1.0)
+@export var secondary_ring_color: Color = Color(0.0, 0.3, 0.8, 1.0)
+@export var foam_color: Color = Color(1.0, 1.0, 1.0, 0.8)
+@export var bleed: float = 8.0
+@export var ring_speed: float = 0.05
+@export var secondary_ring_speed: float = 0.03
+@export var foam_speed: float = 0.08
+@export var foam_width: float = 0.02
+@export var foam_wave_freq: float = 4.0   # angular frequency of wavy distortion
+@export var foam_wave_amp: float = 0.02    # amplitude of wave distortion
+@export var circle_correction: float = 1.0
+@export var glow_strength: float = 0.8
 
 # Typewriter effect
 @export var reveal_speed: float = 10.0
@@ -52,9 +62,6 @@ var using_mouse: bool = false
 var focus_on_bottom: bool = false
 var selected_bottom_index: int = 0
 var bottom_actions: Array[String] = ["SAVE", "BACK", "RESET ALL"]
-var bottom_rects: Array[Rect2] = []
-var bottom_x_starts: Array[float] = []
-var bottom_widths: Array[float] = []
 
 # Scrolling support
 var scroll_offset: int = 0
@@ -63,6 +70,13 @@ var max_visible_rows: int = 0
 # Typewriter reveal progress (0..1)
 var reveal: float = 0.0
 var animate_reveal: bool = false
+
+# Visual layers
+var bg_layer: ColorRect
+var glow_layer: ColorRect
+var glow_positions: Array[Vector2] = []
+var glow_positions_captured: bool = false   # freeze positions after first frame
+var time: float = 0.0
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -73,18 +87,125 @@ func _ready() -> void:
 	font = SystemFont.new()
 	font.font_names = PackedStringArray(["Courier New", "monospace"])
 
+	_create_background_layer()
+	_create_glow_layer()
+
 	_build_gameplay_page()
 	reveal = 0.0
 	animate_reveal = true
 	get_viewport().size_changed.connect(_on_resized)
 	_on_resized()
 
+func _create_background_layer() -> void:
+	bg_layer = ColorRect.new()
+	bg_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bg_layer.color = bg_color
+	bg_layer.z_index = -3
+	add_child(bg_layer)
+
+func _create_glow_layer() -> void:
+	glow_layer = ColorRect.new()
+	glow_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	glow_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	glow_layer.color = Color(0,0,0,0)
+	glow_layer.z_index = -1
+	# No blend mode line (default)
+
+	var shader = Shader.new()
+	shader.code = """
+shader_type canvas_item;
+uniform int glow_count = 0;
+uniform vec2 glow_positions[32];
+uniform vec4 base_glow_color : source_color = vec4(0.0, 0.08, 0.35, 1.0);
+uniform vec4 ring_color : source_color = vec4(0.0, 0.2, 0.6, 1.0);
+uniform vec4 secondary_ring_color : source_color = vec4(0.0, 0.3, 0.8, 1.0);
+uniform vec4 foam_color : source_color = vec4(1.0, 1.0, 1.0, 0.8);
+uniform float bleed = 8.0;
+uniform float ring_speed = 0.05;
+uniform float secondary_ring_speed = 0.03;
+uniform float foam_speed = 0.08;
+uniform float foam_width = 0.02;
+uniform float foam_wave_freq = 4.0;
+uniform float foam_wave_amp = 0.02;
+uniform float inv_aspect = 1.0;
+uniform float circle_correction = 1.0;
+uniform float glow_strength = 0.8;
+uniform float time = 0.0;
+
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453);
+}
+
+void fragment() {
+    vec3 col = vec3(0.0);
+    for (int i = 0; i < glow_count; i++) {
+        vec2 diff = UV - glow_positions[i];
+        diff.x *= inv_aspect * circle_correction;
+        float dist = length(diff);
+
+        // Soft central glow
+        float central = exp(-dist * 2.5) * 0.8;
+        col += base_glow_color.rgb * central;
+
+        // Main rings (soft)
+        for (int j = 0; j < 4; j++) {
+            float t = fract(time * ring_speed + float(j) * 0.25);
+            float radius = t * 0.7 + 0.2;
+            float envelope = sin(t * PI);
+            float d = abs(dist - radius);
+            float ring = exp(-d * bleed) * 0.15 * envelope;
+            col += ring_color.rgb * ring;
+        }
+
+        // Secondary rings (soft)
+        for (int j = 0; j < 3; j++) {
+            float t = fract(time * secondary_ring_speed + float(j) * 0.33 + 0.5);
+            float radius = t * 0.6 + 0.25;
+            float envelope = sin(t * PI);
+            float d = abs(dist - radius);
+            float ring = exp(-d * bleed * 0.7) * 0.1 * envelope;
+            col += secondary_ring_color.rgb * ring;
+        }
+
+        // Foam lines (harmonious waves)
+        float point_phase = hash(vec2(float(i), 1.0)) * 6.28318;
+        for (int j = 0; j < 3; j++) {
+            float t = fract(time * foam_speed + float(j) * 0.2 + point_phase * 0.1);
+            float radius = mix(0.1, 0.8, t);
+            float angle = atan(diff.y, diff.x);
+            radius += foam_wave_amp * sin(angle * foam_wave_freq + time * 2.0 + point_phase);
+            float envelope = sin(t * PI);
+            float d = abs(dist - radius);
+            float line = exp(-pow(d / foam_width, 2.0));
+            col += foam_color.rgb * line * envelope * 0.8;
+        }
+    }
+    col *= glow_strength;
+
+    // Dithering to reduce banding
+    float dither = (hash(UV * 100.0) - 0.5) * 0.015;
+    col += vec3(dither);
+
+    COLOR = vec4(col, 1.0);
+}
+"""
+	var mat = ShaderMaterial.new()
+	mat.shader = shader
+	glow_layer.material = mat
+	add_child(glow_layer)
+
 func _process(delta: float) -> void:
+	time += delta
 	if animate_reveal and reveal < 1.0:
 		reveal = min(reveal + delta * reveal_speed, 1.0)
 		queue_redraw()
 	elif animate_reveal and reveal >= 1.0:
 		animate_reveal = false
+
+	if glow_layer:
+		var mat = glow_layer.material as ShaderMaterial
+		mat.set_shader_parameter("time", time)
 
 func _on_resized() -> void:
 	var vs = get_viewport_rect().size
@@ -109,7 +230,9 @@ func _update_scroll_range() -> void:
 # DRAWING
 # ============================================================================
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), bg_color)
+	if not glow_positions_captured:
+		glow_positions.clear()
+	# else: keep positions constant
 
 	# Section bar
 	var y = padding
@@ -120,7 +243,8 @@ func _draw() -> void:
 		else:
 			section_text = "  " + section_text + "  "
 		var col = highlight_color if i == selected_section else text_color
-		_draw_text_with_glow(Vector2(padding + i * (font_size * 8), y + font.get_ascent(font_size)), section_text, col)
+		var pos = Vector2(padding + i * (font_size * 8), y + font.get_ascent(font_size))
+		_draw_text(pos, section_text, col)
 
 	# Options area
 	var options_start_y = padding + line_height * 2
@@ -134,7 +258,7 @@ func _draw() -> void:
 		if animate_reveal:
 			var visible_chars = int(reveal * line_text.length())
 			display_text = line_text.substr(0, visible_chars)
-		_draw_text_with_glow(Vector2(padding, line_y + font.get_ascent(font_size)), display_text, col)
+		_draw_text(Vector2(padding, line_y + font.get_ascent(font_size)), display_text, col)
 
 	# Bottom action bar
 	_draw_bottom_actions()
@@ -146,14 +270,14 @@ func _draw() -> void:
 		if animate_reveal:
 			var visible = int(reveal * prompt.length())
 			display = prompt.substr(0, visible)
-		_draw_text_with_glow(Vector2(padding, size.y - line_height * 3 + font.get_ascent(font_size)), display, highlight_color)
+		_draw_text(Vector2(padding, size.y - line_height * 3 + font.get_ascent(font_size)), display, highlight_color)
 	elif typing_mode:
 		var prompt = "Type value for " + typing_target + ": " + typed_text + "_"
 		var display = prompt
 		if animate_reveal:
 			var visible = int(reveal * prompt.length())
 			display = prompt.substr(0, visible)
-		_draw_text_with_glow(Vector2(padding, size.y - line_height * 3 + font.get_ascent(font_size)), display, highlight_color)
+		_draw_text(Vector2(padding, size.y - line_height * 3 + font.get_ascent(font_size)), display, highlight_color)
 
 	if dropdown_open:
 		_draw_dropdown()
@@ -161,11 +285,11 @@ func _draw() -> void:
 	if confirming_exit:
 		_draw_confirm_dialog()
 
-func _draw_bottom_actions() -> void:
-	bottom_rects.clear()
-	bottom_x_starts.clear()
-	bottom_widths.clear()
+	if not glow_positions_captured:
+		glow_positions_captured = true
+	_update_glow_shader()
 
+func _draw_bottom_actions() -> void:
 	var bottom_y = size.y - line_height * 2
 	var gap = font_size * 5
 	var x = padding
@@ -181,35 +305,58 @@ func _draw_bottom_actions() -> void:
 			drawn_text = display_text.substr(0, visible_chars)
 
 		var col = highlight_color if is_selected else text_color
-		_draw_text_with_glow(Vector2(x, bottom_y + font.get_ascent(font_size)), drawn_text, col)
+		_draw_text(Vector2(x, bottom_y + font.get_ascent(font_size)), drawn_text, col)
 
-		var full_width = font.get_string_size(display_text).x
-		bottom_x_starts.append(x)
-		bottom_widths.append(full_width)
-		bottom_rects.append(Rect2(x, bottom_y, full_width, line_height))
+		x += font.get_string_size(display_text).x + gap
 
-		x += full_width + gap
-
-func _draw_text_with_glow(pos: Vector2, text: String, color: Color) -> void:
-	for offset in [Vector2(glow_offset, 0), Vector2(-glow_offset, 0), Vector2(0, glow_offset), Vector2(0, -glow_offset)]:
-		draw_string(font, pos + offset, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, glow_color)
+func _draw_text(pos: Vector2, text: String, color: Color) -> void:
 	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+	if not glow_positions_captured:
+		var text_size = font.get_string_size(text)
+		var center = pos + Vector2(text_size.x / 2.0, -text_size.y / 2.0)
+		glow_positions.append(center)
+
+func _update_glow_shader() -> void:
+	if glow_layer == null:
+		return
+	var mat = glow_layer.material as ShaderMaterial
+	var vs = get_viewport_rect().size
+	var count = min(glow_positions.size(), 32)
+	mat.set_shader_parameter("glow_count", count)
+	var pos_array = []
+	for i in range(count):
+		var uv = Vector2(glow_positions[i].x / vs.x, glow_positions[i].y / vs.y)
+		pos_array.append(uv)
+	for i in range(count, 32):
+		pos_array.append(Vector2.ZERO)
+	mat.set_shader_parameter("glow_positions", pos_array)
+	mat.set_shader_parameter("base_glow_color", base_glow_color)
+	mat.set_shader_parameter("ring_color", ring_color)
+	mat.set_shader_parameter("secondary_ring_color", secondary_ring_color)
+	mat.set_shader_parameter("foam_color", foam_color)
+	mat.set_shader_parameter("bleed", bleed)
+	mat.set_shader_parameter("ring_speed", ring_speed)
+	mat.set_shader_parameter("secondary_ring_speed", secondary_ring_speed)
+	mat.set_shader_parameter("foam_speed", foam_speed)
+	mat.set_shader_parameter("foam_width", foam_width)
+	mat.set_shader_parameter("foam_wave_freq", foam_wave_freq)
+	mat.set_shader_parameter("foam_wave_amp", foam_wave_amp)
+	mat.set_shader_parameter("circle_correction", circle_correction)
+	mat.set_shader_parameter("glow_strength", glow_strength)
+	mat.set_shader_parameter("inv_aspect", vs.y / vs.x)
 
 func _draw_confirm_dialog() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.0, 0.0, 0.0, 0.85))
-
 	var prompt = "Unsaved changes! What do you want to do?"
 	var options = ["Save & Exit", "Exit Without Saving", "Cancel"]
-
 	var px = padding
 	var py = size.y * 0.3
-	_draw_text_with_glow(Vector2(px, py + font.get_ascent(font_size)), prompt, text_color)
-
+	_draw_text(Vector2(px, py + font.get_ascent(font_size)), prompt, text_color)
 	confirm_rects.clear()
 	var y = py + line_height * 1.5
 	for i in range(options.size()):
 		var col = highlight_color if i == confirm_selected else text_color
-		_draw_text_with_glow(Vector2(px, y + font.get_ascent(font_size)), options[i], col)
+		_draw_text(Vector2(px, y + font.get_ascent(font_size)), options[i], col)
 		var rect = Rect2(px, y, size.x - px * 2, line_height)
 		confirm_rects.append(rect)
 		y += line_height
@@ -222,7 +369,7 @@ func _draw_dropdown() -> void:
 	for i in range(dropdown_options.size()):
 		var prefix = "> " if i == dropdown_selected else "  "
 		var col = highlight_color if i == dropdown_selected else text_color
-		_draw_text_with_glow(Vector2(dd_x + 10, dd_y + 10 + i * line_height + font.get_ascent(font_size)), prefix + str(dropdown_options[i]), col)
+		_draw_text(Vector2(dd_x + 10, dd_y + 10 + i * line_height + font.get_ascent(font_size)), prefix + str(dropdown_options[i]), col)
 
 # ============================================================================
 # PAGE BUILDERS
@@ -307,14 +454,12 @@ func _get_entry_layout(i: int, line_y: float) -> Dictionary:
 	var is_active = (i == selected_index and not focus_on_sections and not focus_on_bottom)
 	var prefix = "> " if is_active else "  "
 	var full_text = prefix + entries[i].text
-
 	var layout = {
 		"y": line_y,
 		"x": padding,
 		"text": full_text,
 		"active": is_active
 	}
-
 	if entries[i].action == "adjust":
 		var label = entries[i].get("label", "")
 		var prefix_and_label = prefix + label + ": ["
@@ -326,14 +471,11 @@ func _get_entry_layout(i: int, line_y: float) -> Dictionary:
 		layout["bar_start_x"] = bar_start_x
 		layout["bar_end_x"] = bar_end_x
 		layout["bar_rect"] = Rect2(bar_start_x, line_y, bar_end_x - bar_start_x, line_height)
-
 	return layout
 
 func _line_index_from_pos(pos: Vector2) -> int:
-	# Exclude bottom row band completely
 	if pos.y >= size.y - line_height * 2:
 		return -1
-
 	var options_start_y = padding + line_height * 2
 	var rel_y = pos.y - options_start_y
 	if rel_y < 0 or rel_y >= max_visible_rows * line_height:
@@ -356,14 +498,17 @@ func _section_index_from_pos(pos: Vector2) -> int:
 	return -1
 
 func _bottom_action_index(pos: Vector2) -> int:
-	# Check if within bottom row band
 	if pos.y < size.y - line_height * 2 or pos.y >= size.y - line_height:
 		return -1
-
-	# Use stored x positions for hit detection
-	for i in range(bottom_x_starts.size()):
-		if pos.x >= bottom_x_starts[i] and pos.x <= bottom_x_starts[i] + bottom_widths[i]:
+	var x = padding
+	var gap = font_size * 5
+	for i in range(bottom_actions.size()):
+		var display_text = ("> " if focus_on_bottom and i == selected_bottom_index else "  ") + bottom_actions[i]
+		var width = font.get_string_size(display_text).x
+		var segment_width = width + gap
+		if pos.x >= x and pos.x < x + segment_width:
 			return i
+		x += segment_width
 	return -1
 
 # ============================================================================
@@ -409,7 +554,6 @@ func _input(event: InputEvent) -> void:
 				if bottom_idx != -1:
 					_handle_bottom_action(bottom_idx)
 					return
-
 				if event.position.y < line_height * 2:
 					var sec_idx = _section_index_from_pos(event.position)
 					if sec_idx != -1:
@@ -417,7 +561,6 @@ func _input(event: InputEvent) -> void:
 						_open_section(selected_section)
 						queue_redraw()
 					return
-
 				var idx = _line_index_from_pos(event.position)
 				if idx >= 0 and idx < entries.size():
 					selected_index = idx
@@ -619,12 +762,10 @@ func _handle_mouse_motion(pos: Vector2) -> void:
 	var layout = _get_entry_layout(selected_index, line_y)
 	if layout.is_empty() or not layout.has("bar_start_x"):
 		return
-
 	var bar_start = layout["bar_start_x"]
 	var bar_end = layout["bar_end_x"]
 	if bar_end - bar_start <= 0.001:
 		return
-
 	var ratio = clamp((pos.x - bar_start) / (bar_end - bar_start), 0.0, 1.0)
 	var entry = entries[selected_index]
 	GameSettings.settings[entry.param] = int(entry.min + ratio * (entry.max - entry.min))
@@ -666,6 +807,10 @@ func _confirm_execute(index: int) -> void:
 			_save_all()
 			_exit_to_main_menu()
 		1:
+			GameSettings.load_settings()
+			GameSettings.load_player_input_map()
+			GameSettings.apply_settings()
+			GameSettings.dirty = false
 			_exit_to_main_menu()
 		2:
 			confirming_exit = false
