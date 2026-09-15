@@ -17,13 +17,27 @@ extends Control
 @export var secondary_ring_speed: float = 0.03
 @export var foam_speed: float = 0.08
 @export var foam_width: float = 0.02
-@export var foam_wave_freq: float = 4.0   # angular frequency of wavy distortion
-@export var foam_wave_amp: float = 0.02    # amplitude of wave distortion
+@export var foam_wave_freq: float = 4.0
+@export var foam_wave_amp: float = 0.02
 @export var circle_correction: float = 1.0
 @export var glow_strength: float = 0.8
 
+# Floating text effect
+@export_group("Floating Text")
+@export var float_amp_y: float = 5.0
+@export var float_amp_x: float = 2.5
+@export var float_speed_y: float = 0.18
+@export var float_speed_x: float = 0.13
+@export var float_phase_offset: float = 0.5
+@export var float_rot_amp: float = 0.006
+@export var float_rot_speed: float = 0.06
+@export_group("")
+
 # Typewriter effect
 @export var reveal_speed: float = 10.0
+
+# Dropdown padding
+@export var dropdown_padding: float = 12.0
 
 var font: SystemFont
 var font_size: int = 40
@@ -41,9 +55,7 @@ var entries: Array[Dictionary] = []
 # Modal states
 var awaiting_input: bool = false
 var rebinding_action: String = ""
-var typing_mode: bool = false
-var typed_text: String = ""
-var typing_target: String = ""
+var binding_mode: bool = false
 
 var confirming_exit: bool = false
 var confirm_selected: int = 0
@@ -54,20 +66,21 @@ var dropdown_options: Array = []
 var dropdown_selected: int = 0
 var dropdown_target: String = ""
 var dropdown_anchor: Vector2 = Vector2.ZERO
+var dropdown_parent_index: int = 0
 
 var dragging_slider: bool = false
 var using_mouse: bool = false
 
-# Bottom action bar focus
+# Bottom action bar
 var focus_on_bottom: bool = false
 var selected_bottom_index: int = 0
 var bottom_actions: Array[String] = ["SAVE", "BACK", "RESET ALL"]
 
-# Scrolling support
+# Scrolling
 var scroll_offset: int = 0
 var max_visible_rows: int = 0
 
-# Typewriter reveal progress (0..1)
+# Typewriter reveal
 var reveal: float = 0.0
 var animate_reveal: bool = false
 
@@ -75,8 +88,8 @@ var animate_reveal: bool = false
 var bg_layer: ColorRect
 var glow_layer: ColorRect
 var glow_positions: Array[Vector2] = []
-var glow_positions_captured: bool = false   # freeze positions after first frame
 var time: float = 0.0
+var text_float_index: int = 0
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -110,7 +123,6 @@ func _create_glow_layer() -> void:
 	glow_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	glow_layer.color = Color(0,0,0,0)
 	glow_layer.z_index = -1
-	# No blend mode line (default)
 
 	var shader = Shader.new()
 	shader.code = """
@@ -144,11 +156,9 @@ void fragment() {
         diff.x *= inv_aspect * circle_correction;
         float dist = length(diff);
 
-        // Soft central glow
         float central = exp(-dist * 2.5) * 0.8;
         col += base_glow_color.rgb * central;
 
-        // Main rings (soft)
         for (int j = 0; j < 4; j++) {
             float t = fract(time * ring_speed + float(j) * 0.25);
             float radius = t * 0.7 + 0.2;
@@ -158,7 +168,6 @@ void fragment() {
             col += ring_color.rgb * ring;
         }
 
-        // Secondary rings (soft)
         for (int j = 0; j < 3; j++) {
             float t = fract(time * secondary_ring_speed + float(j) * 0.33 + 0.5);
             float radius = t * 0.6 + 0.25;
@@ -168,7 +177,6 @@ void fragment() {
             col += secondary_ring_color.rgb * ring;
         }
 
-        // Foam lines (harmonious waves)
         float point_phase = hash(vec2(float(i), 1.0)) * 6.28318;
         for (int j = 0; j < 3; j++) {
             float t = fract(time * foam_speed + float(j) * 0.2 + point_phase * 0.1);
@@ -183,7 +191,6 @@ void fragment() {
     }
     col *= glow_strength;
 
-    // Dithering to reduce banding
     float dither = (hash(UV * 100.0) - 0.5) * 0.015;
     col += vec3(dither);
 
@@ -202,6 +209,8 @@ func _process(delta: float) -> void:
 		queue_redraw()
 	elif animate_reveal and reveal >= 1.0:
 		animate_reveal = false
+
+	queue_redraw()
 
 	if glow_layer:
 		var mat = glow_layer.material as ShaderMaterial
@@ -227,23 +236,38 @@ func _update_scroll_range() -> void:
 	scroll_offset = clampi(scroll_offset, 0, max_scroll)
 
 # ============================================================================
+# FLOATING TEXT MATH
+# ============================================================================
+func _compute_float(phase: float) -> Vector3:
+	var y_offset = sin(time * float_speed_y * TAU + phase) * float_amp_y + sin(time * float_speed_y * 1.7 + phase * 2.0) * float_amp_y * 0.4
+	var x_offset = sin(time * float_speed_x * TAU + phase * 0.7) * float_amp_x + cos(time * float_speed_x * 1.3 + phase) * float_amp_x * 0.5
+	var rot_offset = sin(time * float_rot_speed * TAU + phase) * float_rot_amp
+	return Vector3(x_offset, y_offset, rot_offset)
+
+func _get_entry_float_index(index: int) -> int:
+	return section_names.size() + (index - scroll_offset)
+
+# ============================================================================
 # DRAWING
 # ============================================================================
 func _draw() -> void:
-	if not glow_positions_captured:
-		glow_positions.clear()
-	# else: keep positions constant
+	text_float_index = 0
+	glow_positions.clear()
 
-	# Section bar
+	# Section bar – evenly spaced centers
 	var y = padding
-	for i in range(section_names.size()):
+	var total_width = size.x - 2 * padding
+	var num_sections = section_names.size()
+	for i in range(num_sections):
 		var section_text = section_names[i]
 		if i == selected_section:
 			section_text = "[ " + section_text + " ]"
 		else:
 			section_text = "  " + section_text + "  "
 		var col = highlight_color if i == selected_section else text_color
-		var pos = Vector2(padding + i * (font_size * 8), y + font.get_ascent(font_size))
+		var text_width = font.get_string_size(section_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		var center_x = padding + total_width * (i + 0.5) / num_sections
+		var pos = Vector2(center_x - text_width / 2, y + font.get_ascent(font_size))
 		_draw_text(pos, section_text, col)
 
 	# Options area
@@ -253,7 +277,10 @@ func _draw() -> void:
 		var line_y = options_start_y + (i - scroll_offset) * line_height
 		var layout = _get_entry_layout(i, line_y)
 		var line_text: String = layout["text"]
+		var is_rebind_target = binding_mode and i == selected_index and entries[i].action == "rebind"
 		var col = highlight_color if layout["active"] else text_color
+		if is_rebind_target:
+			col = Color(0.0, 1.0, 0.7)
 		var display_text = line_text
 		if animate_reveal:
 			var visible_chars = int(reveal * line_text.length())
@@ -263,21 +290,9 @@ func _draw() -> void:
 	# Bottom action bar
 	_draw_bottom_actions()
 
-	# Overlays
-	if awaiting_input:
-		var prompt = "Press any key for " + rebinding_action + "..."
-		var display = prompt
-		if animate_reveal:
-			var visible = int(reveal * prompt.length())
-			display = prompt.substr(0, visible)
-		_draw_text(Vector2(padding, size.y - line_height * 3 + font.get_ascent(font_size)), display, highlight_color)
-	elif typing_mode:
-		var prompt = "Type value for " + typing_target + ": " + typed_text + "_"
-		var display = prompt
-		if animate_reveal:
-			var visible = int(reveal * prompt.length())
-			display = prompt.substr(0, visible)
-		_draw_text(Vector2(padding, size.y - line_height * 3 + font.get_ascent(font_size)), display, highlight_color)
+	# Binding mode prompt – styled box with fixed width, right-aligned
+	if binding_mode:
+		_draw_binding_prompt()
 
 	if dropdown_open:
 		_draw_dropdown()
@@ -285,9 +300,75 @@ func _draw() -> void:
 	if confirming_exit:
 		_draw_confirm_dialog()
 
-	if not glow_positions_captured:
-		glow_positions_captured = true
 	_update_glow_shader()
+
+func _draw_binding_prompt() -> void:
+	var friendly_name = rebinding_action.replace("_", " ").capitalize()
+	var line1 = "Press any button to bind it to %s" % friendly_name
+	var line2 = "Press ESC to cancel, press DELETE to remove last input"
+
+	# Fixed width for the box (45% of screen width, capped at 500px)
+	var box_width = min(size.x * 0.45, 500.0)
+	var box_padding = dropdown_padding * 2  # inner padding
+
+	# Wrap each line to fit within box_width - 2*box_padding
+	var max_line_width = box_width - 2 * box_padding
+	var wrapped_lines: Array[String] = []
+	wrapped_lines.append_array(_wrap_text(line1, max_line_width))
+	wrapped_lines.append_array(_wrap_text(line2, max_line_width))
+
+	var total_lines = wrapped_lines.size()
+	var box_height = total_lines * line_height + box_padding * 2
+
+	# Position: bottom-right, above bottom actions
+	var box_x = size.x - box_width - padding
+	var box_y = size.y - line_height * 2 - box_height - padding
+	# Apply float offset (so it moves with the selected option)
+	var prompt_phase = _get_entry_float_index(selected_index) * float_phase_offset
+	var f = _compute_float(prompt_phase)
+	var offset = Vector2(f.x, f.y)
+	var rot = f.z
+
+	draw_set_transform(Vector2(offset.x, offset.y), rot, Vector2.ONE)
+
+	var rect = Rect2(box_x, box_y, box_width, box_height)
+	# Background
+	draw_rect(rect, Color(0, 0, 0, 0.95))
+	# Border
+	var border_color = highlight_color
+	var border_width = 1.5
+	draw_line(rect.position, rect.position + Vector2(rect.size.x, 0), border_color, border_width, true)
+	draw_line(rect.position + Vector2(0, rect.size.y), rect.position + rect.size, border_color, border_width, true)
+	draw_line(rect.position, rect.position + Vector2(0, rect.size.y), border_color, border_width, true)
+	draw_line(rect.position + Vector2(rect.size.x, 0), rect.position + rect.size, border_color, border_width, true)
+
+	# Draw each wrapped line
+	var text_color_prompt = highlight_color
+	for idx in range(total_lines):
+		var line_y_pos = box_y + box_padding + idx * line_height + font.get_ascent(font_size)
+		var text_pos = Vector2(box_x + box_padding, line_y_pos)
+		draw_string(font, text_pos, wrapped_lines[idx], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, text_color_prompt)
+
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+# Helper to wrap text into lines that fit within max_width
+func _wrap_text(text: String, max_width: float) -> Array[String]:
+	var words = text.split(" ", false)
+	var lines: Array[String] = []
+	var current_line = ""
+	for w in words:
+		var test_line = current_line + (" " if current_line != "" else "") + w
+		var w_width = font.get_string_size(test_line, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		if w_width > max_width and current_line != "":
+			lines.append(current_line)
+			current_line = w
+		else:
+			current_line = test_line
+	if current_line != "":
+		lines.append(current_line)
+	if lines.is_empty():
+		lines.append(text)
+	return lines
 
 func _draw_bottom_actions() -> void:
 	var bottom_y = size.y - line_height * 2
@@ -295,26 +376,101 @@ func _draw_bottom_actions() -> void:
 	var x = padding
 
 	for i in range(bottom_actions.size()):
-		var text = bottom_actions[i]
+		var action_text = bottom_actions[i]
 		var is_selected = focus_on_bottom and i == selected_bottom_index
 
-		var display_text = ("> " if is_selected else "  ") + text
+		var display_text = ("> " if is_selected else "  ") + action_text
 		var drawn_text = display_text
 		if animate_reveal:
 			var visible_chars = int(reveal * display_text.length())
 			drawn_text = display_text.substr(0, visible_chars)
 
-		var col = highlight_color if is_selected else text_color
+		var col: Color
+		if action_text == "SAVE":
+			if is_selected or GameSettings.dirty:
+				col = highlight_color
+			else:
+				col = dim_color
+		else:
+			col = highlight_color if is_selected else text_color
+
 		_draw_text(Vector2(x, bottom_y + font.get_ascent(font_size)), drawn_text, col)
 
-		x += font.get_string_size(display_text).x + gap
+		x += font.get_string_size(display_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + gap
+
+# Core drawer
+func _draw_text_with_phase(pos: Vector2, text: String, color: Color, phase: float) -> void:
+	var f = _compute_float(phase)
+	var text_size = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+	var text_center = pos + Vector2(f.x, f.y) + Vector2(text_size.x / 2.0, -text_size.y / 2.0)
+
+	draw_set_transform(text_center, f.z, Vector2.ONE)
+	draw_string(font, -Vector2(text_size.x / 2.0, -text_size.y / 2.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+	glow_positions.append(text_center)
 
 func _draw_text(pos: Vector2, text: String, color: Color) -> void:
-	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
-	if not glow_positions_captured:
-		var text_size = font.get_string_size(text)
-		var center = pos + Vector2(text_size.x / 2.0, -text_size.y / 2.0)
-		glow_positions.append(center)
+	var phase = text_float_index * float_phase_offset
+	_draw_text_with_phase(pos, text, color, phase)
+	text_float_index += 1
+
+# ============================================================
+# DROPDOWN
+# ============================================================
+func _get_dropdown_rect() -> Rect2:
+	var dd_x = dropdown_anchor.x
+	var dd_y = dropdown_anchor.y
+
+	var max_width = 0.0
+	for i in range(dropdown_options.size()):
+		var display_val = str(dropdown_options[i])
+		if dropdown_target == "max_fps" and int(dropdown_options[i]) == 0:
+			display_val = "Uncapped"
+		var prefix = "> " if i == dropdown_selected else "  "
+		var w = font.get_string_size(prefix + display_val, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		if w > max_width:
+			max_width = w
+
+	var dd_width = max_width + 2 * dropdown_padding
+	var max_available = size.x - dd_x - padding
+	if dd_width > max_available:
+		dd_width = max_available
+	var dd_height = dropdown_options.size() * line_height + 2 * dropdown_padding
+	return Rect2(dd_x, dd_y, dd_width, dd_height)
+
+func _draw_dropdown() -> void:
+	var parent_phase = _get_entry_float_index(dropdown_parent_index) * float_phase_offset
+	var f = _compute_float(parent_phase)
+	var offset = Vector2(f.x, f.y)
+	var rot = f.z
+
+	var dd_rect = _get_dropdown_rect()
+
+	draw_set_transform(Vector2(offset.x, offset.y), rot, Vector2.ONE)
+
+	draw_rect(Rect2(dd_rect.position, dd_rect.size), Color(0, 0, 0, 0.95))
+
+	var border_color = highlight_color
+	var border_width = 1.5
+	draw_line(dd_rect.position, dd_rect.position + Vector2(dd_rect.size.x, 0), border_color, border_width, true)
+	draw_line(dd_rect.position + Vector2(0, dd_rect.size.y), dd_rect.position + dd_rect.size, border_color, border_width, true)
+	draw_line(dd_rect.position, dd_rect.position + Vector2(0, dd_rect.size.y), border_color, border_width, true)
+	draw_line(dd_rect.position + Vector2(dd_rect.size.x, 0), dd_rect.position + dd_rect.size, border_color, border_width, true)
+
+	for i in range(dropdown_options.size()):
+		var prefix = "> " if i == dropdown_selected else "  "
+		var display_val = str(dropdown_options[i])
+		if dropdown_target == "max_fps" and int(dropdown_options[i]) == 0:
+			display_val = "Uncapped"
+		var col = highlight_color if i == dropdown_selected else text_color
+		var text_pos = Vector2(
+			dd_rect.position.x + dropdown_padding,
+			dd_rect.position.y + dropdown_padding + i * line_height + font.get_ascent(font_size)
+		)
+		draw_string(font, text_pos, prefix + display_val, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, col)
+
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _update_glow_shader() -> void:
 	if glow_layer == null:
@@ -361,16 +517,6 @@ func _draw_confirm_dialog() -> void:
 		confirm_rects.append(rect)
 		y += line_height
 
-func _draw_dropdown() -> void:
-	var dd_x = dropdown_anchor.x
-	var dd_y = dropdown_anchor.y
-	var dd_width = size.x - dd_x - padding
-	draw_rect(Rect2(dd_x, dd_y, dd_width, dropdown_options.size() * line_height + 10), Color(0, 0, 0, 0.9))
-	for i in range(dropdown_options.size()):
-		var prefix = "> " if i == dropdown_selected else "  "
-		var col = highlight_color if i == dropdown_selected else text_color
-		_draw_text(Vector2(dd_x + 10, dd_y + 10 + i * line_height + font.get_ascent(font_size)), prefix + str(dropdown_options[i]), col)
-
 # ============================================================================
 # PAGE BUILDERS
 # ============================================================================
@@ -416,21 +562,110 @@ func _build_controls_page() -> void:
 		entries.append({"text": "No custom actions found", "action": "back"})
 	else:
 		for action in actions:
-			var key_text = _get_action_display(action)
-			entries.append({"text": action.replace("_", " ") + "  [" + key_text + "]", "action": "rebind", "param": action})
+			var bindings_display = _get_action_bindings_display(action)
+			var friendly_name = action.replace("_", " ").capitalize()
+			entries.append({
+				"text": "%s: %s" % [friendly_name, bindings_display],
+				"action": "rebind",
+				"param": action
+			})
 	entries.append({"text": "Reset Keybinds", "action": "reset_keys"})
-	scroll_offset = 0
 	_update_scroll_range()
 	queue_redraw()
 
-func _build_current_page() -> void:
+func _get_action_bindings_display(action: String) -> String:
+	var events = InputMap.action_get_events(action)
+	if events.is_empty():
+		return "[None]"
+	var parts = []
+	for e in events:
+		var label = _get_event_display(e)
+		if label != "":
+			parts.append("[%s]" % label)
+	if parts.is_empty():
+		return "[None]"
+	return " ".join(parts)
+
+func _get_event_display(event: InputEvent) -> String:
+	if event is InputEventKey:
+		var kc = event.keycode
+		if kc == KEY_NONE and event.physical_keycode != KEY_NONE:
+			kc = DisplayServer.keyboard_get_keycode_from_physical(event.physical_keycode)
+		return OS.get_keycode_string(kc)
+	elif event is InputEventMouseButton:
+		match event.button_index:
+			MOUSE_BUTTON_LEFT: return "Left Mouse"
+			MOUSE_BUTTON_RIGHT: return "Right Mouse"
+			MOUSE_BUTTON_MIDDLE: return "Middle Mouse"
+			_: return "Mouse " + str(event.button_index)
+	elif event is InputEventJoypadButton:
+		return "%s (Joypad)" % _get_joypad_button_name(event.button_index)
+	elif event is InputEventJoypadMotion:
+		var axis_name = _get_joypad_axis_name(event.axis)
+		@warning_ignore("shadowed_global_identifier")
+		var sign = " +" if event.axis_value > 0 else " -"
+		return "%s%s" % [axis_name, sign]
+	return ""
+
+func _get_joypad_button_name(button: int) -> String:
+	match button:
+		0: return "A"
+		1: return "B"
+		2: return "X"
+		3: return "Y"
+		4: return "L1"
+		5: return "R1"
+		6: return "L2"
+		7: return "R2"
+		8: return "Back"
+		9: return "Start"
+		10: return "L3"
+		11: return "R3"
+		12: return "D-Pad Up"
+		13: return "D-Pad Down"
+		14: return "D-Pad Left"
+		15: return "D-Pad Right"
+		16: return "Guide"
+		_: return "Button %d" % button
+
+func _get_joypad_axis_name(axis: int) -> String:
+	match axis:
+		JOY_AXIS_LEFT_X: return "Left Stick X"
+		JOY_AXIS_LEFT_Y: return "Left Stick Y"
+		JOY_AXIS_RIGHT_X: return "Right Stick X"
+		JOY_AXIS_RIGHT_Y: return "Right Stick Y"
+		JOY_AXIS_TRIGGER_LEFT: return "Left Trigger"
+		JOY_AXIS_TRIGGER_RIGHT: return "Right Trigger"
+		_: return "Axis %d" % axis
+
+# Rebuild current page while preserving selected_index and scroll_offset
+func _rebuild_current_page() -> void:
+	var old_index = selected_index
+	var old_scroll = scroll_offset
 	match current_page:
 		"gameplay": _build_gameplay_page()
 		"audio": _build_audio_page()
 		"graphics": _build_graphics_page()
 		"controls": _build_controls_page()
 		_: _build_gameplay_page()
+	# Restore selection if still valid
+	if old_index < entries.size():
+		selected_index = old_index
+	else:
+		selected_index = entries.size() - 1
+	if selected_index < 0:
+		selected_index = 0
+	# Restore scroll if still valid
+	var max_scroll = max(0, entries.size() - max_visible_rows)
+	if old_scroll <= max_scroll:
+		scroll_offset = old_scroll
+	else:
+		scroll_offset = max_scroll
+	_update_scroll_range()
 	queue_redraw()
+
+func _build_current_page() -> void:
+	_rebuild_current_page()
 
 func _open_section(idx: int) -> void:
 	selected_section = idx
@@ -458,19 +693,27 @@ func _get_entry_layout(i: int, line_y: float) -> Dictionary:
 		"y": line_y,
 		"x": padding,
 		"text": full_text,
-		"active": is_active
+		"active": is_active,
+		"param": entries[i].get("param", ""),
+		"min": entries[i].get("min", 0),
+		"max": entries[i].get("max", 100)
 	}
 	if entries[i].action == "adjust":
-		var label = entries[i].get("label", "")
-		var prefix_and_label = prefix + label + ": ["
-		var label_width = font.get_string_size(prefix_and_label).x
-		var bar_start_x = padding + label_width + font_size * 0.5
-		var bar_str = entries[i].get("bar", "")
-		var bar_width = font.get_string_size(bar_str).x
-		var bar_end_x = bar_start_x + bar_width
-		layout["bar_start_x"] = bar_start_x
-		layout["bar_end_x"] = bar_end_x
-		layout["bar_rect"] = Rect2(bar_start_x, line_y, bar_end_x - bar_start_x, line_height)
+		var bracket_open = full_text.find("[")
+		var bracket_close = full_text.find("]", bracket_open + 1)
+		if bracket_open != -1 and bracket_close != -1:
+			var label_before_open = full_text.substr(0, bracket_open)
+			var label_before_close = full_text.substr(0, bracket_close + 1)
+			var start_x = padding + font.get_string_size(label_before_open, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+			var end_x = padding + font.get_string_size(label_before_close, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+
+			var bracket_width = font.get_string_size("[", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+			var bar_start_x = start_x + bracket_width
+			var bar_end_x = end_x - bracket_width
+
+			layout["bar_start_x"] = bar_start_x
+			layout["bar_end_x"] = bar_end_x
+			layout["bar_rect"] = Rect2(bar_start_x, line_y, bar_end_x - bar_start_x, line_height)
 	return layout
 
 func _line_index_from_pos(pos: Vector2) -> int:
@@ -491,10 +734,20 @@ func _line_index_from_pos(pos: Vector2) -> int:
 func _section_index_from_pos(pos: Vector2) -> int:
 	if pos.y < 0 or pos.y > line_height * 2:
 		return -1
-	var x = pos.x - padding
-	var idx = int(x / (font_size * 8))
-	if idx >= 0 and idx < section_names.size():
-		return idx
+	var total_width = size.x - 2 * padding
+	var num_sections = section_names.size()
+	for i in range(num_sections):
+		var section_text = section_names[i]
+		if i == selected_section:
+			section_text = "[ " + section_text + " ]"
+		else:
+			section_text = "  " + section_text + "  "
+		var text_width = font.get_string_size(section_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		var center_x = padding + total_width * (i + 0.5) / num_sections
+		var left_x = center_x - text_width / 2
+		var right_x = center_x + text_width / 2
+		if pos.x >= left_x and pos.x <= right_x:
+			return i
 	return -1
 
 func _bottom_action_index(pos: Vector2) -> int:
@@ -504,7 +757,7 @@ func _bottom_action_index(pos: Vector2) -> int:
 	var gap = font_size * 5
 	for i in range(bottom_actions.size()):
 		var display_text = ("> " if focus_on_bottom and i == selected_bottom_index else "  ") + bottom_actions[i]
-		var width = font.get_string_size(display_text).x
+		var width = font.get_string_size(display_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 		var segment_width = width + gap
 		if pos.x >= x and pos.x < x + segment_width:
 			return i
@@ -521,8 +774,8 @@ func _input(event: InputEvent) -> void:
 	if dropdown_open:
 		_input_dropdown(event)
 		return
-	if typing_mode:
-		_input_typing(event)
+	if binding_mode:
+		_input_binding(event)
 		return
 	if awaiting_input:
 		_input_rebind(event)
@@ -554,6 +807,7 @@ func _input(event: InputEvent) -> void:
 				if bottom_idx != -1:
 					_handle_bottom_action(bottom_idx)
 					return
+
 				if event.position.y < line_height * 2:
 					var sec_idx = _section_index_from_pos(event.position)
 					if sec_idx != -1:
@@ -561,6 +815,7 @@ func _input(event: InputEvent) -> void:
 						_open_section(selected_section)
 						queue_redraw()
 					return
+
 				var idx = _line_index_from_pos(event.position)
 				if idx >= 0 and idx < entries.size():
 					selected_index = idx
@@ -568,33 +823,35 @@ func _input(event: InputEvent) -> void:
 					focus_on_bottom = false
 					var entry = entries[idx]
 					if entry.action == "adjust":
-						dragging_slider = true
-						_handle_mouse_motion(event.position)
+						var line_y = padding + line_height * 2 + (idx - scroll_offset) * line_height
+						var base_rect = _get_base_bar_rect(idx, line_y)
+						if base_rect.size.x > 0:
+							var float_offset = _get_float_offset_for_entry(idx)
+							var actual_rect = Rect2(base_rect.position + float_offset, base_rect.size)
+							actual_rect = actual_rect.grow(5)
+							if actual_rect.has_point(event.position):
+								dragging_slider = true
+								_handle_mouse_motion(event.position)
+							else:
+								_activate_selected()
+						else:
+							_activate_selected()
 					else:
 						_activate_selected()
 			elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
-				var idx = _line_index_from_pos(event.position)
-				if idx != -1:
-					selected_index = idx
-					focus_on_sections = false
-					focus_on_bottom = false
-					_adjust_option(1)
-					queue_redraw()
-				else:
+				var options_start_y = padding + line_height * 2
+				var options_end_y = options_start_y + max_visible_rows * line_height
+				if event.position.y >= options_start_y and event.position.y < options_end_y:
 					if scroll_offset > 0:
 						scroll_offset -= 1
 						_update_scroll_range()
 						queue_redraw()
 			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				var idx = _line_index_from_pos(event.position)
-				if idx != -1:
-					selected_index = idx
-					focus_on_sections = false
-					focus_on_bottom = false
-					_adjust_option(-1)
-					queue_redraw()
-				else:
-					if scroll_offset < max(0, entries.size() - max_visible_rows):
+				var options_start_y = padding + line_height * 2
+				var options_end_y = options_start_y + max_visible_rows * line_height
+				if event.position.y >= options_start_y and event.position.y < options_end_y:
+					var max_scroll = max(0, entries.size() - max_visible_rows)
+					if scroll_offset < max_scroll:
 						scroll_offset += 1
 						_update_scroll_range()
 						queue_redraw()
@@ -702,7 +959,7 @@ func _handle_bottom_action(index: int) -> void:
 func _reset_all_action() -> void:
 	GameSettings.reset_settings_to_default()
 	GameSettings.save_settings()
-	_build_current_page()
+	_rebuild_current_page()
 	queue_redraw()
 
 func _reset_keys_action() -> void:
@@ -711,7 +968,7 @@ func _reset_keys_action() -> void:
 	if current_page == "controls":
 		_build_controls_page()
 	else:
-		_build_current_page()
+		_rebuild_current_page()
 	queue_redraw()
 
 func _exit_action() -> void:
@@ -725,18 +982,18 @@ func _exit_action() -> void:
 		_exit_to_main_menu()
 
 func _back() -> void:
+	if binding_mode:
+		binding_mode = false
+		rebinding_action = ""
+		_rebuild_current_page()
+		return
 	if awaiting_input:
 		awaiting_input = false
-		_build_current_page()
-		return
-	if typing_mode:
-		typing_mode = false
-		typed_text = ""
-		_build_current_page()
+		_rebuild_current_page()
 		return
 	if dropdown_open:
 		dropdown_open = false
-		_build_current_page()
+		_rebuild_current_page()
 		return
 	if focus_on_sections:
 		if GameSettings.dirty:
@@ -759,19 +1016,29 @@ func _handle_mouse_motion(pos: Vector2) -> void:
 	if not dragging_slider:
 		return
 	var line_y = padding + line_height * 2 + (selected_index - scroll_offset) * line_height
-	var layout = _get_entry_layout(selected_index, line_y)
-	if layout.is_empty() or not layout.has("bar_start_x"):
+	var base_rect = _get_base_bar_rect(selected_index, line_y)
+	if base_rect.size.x <= 0:
 		return
-	var bar_start = layout["bar_start_x"]
-	var bar_end = layout["bar_end_x"]
-	if bar_end - bar_start <= 0.001:
-		return
-	var ratio = clamp((pos.x - bar_start) / (bar_end - bar_start), 0.0, 1.0)
+	var float_offset = _get_float_offset_for_entry(selected_index)
+	var actual_rect = Rect2(base_rect.position + float_offset, base_rect.size)
+	actual_rect = actual_rect.grow(5)
+	var ratio = clamp((pos.x - actual_rect.position.x) / actual_rect.size.x, 0.0, 1.0)
 	var entry = entries[selected_index]
 	GameSettings.settings[entry.param] = int(entry.min + ratio * (entry.max - entry.min))
 	GameSettings.dirty = true
-	_build_current_page()
+	_rebuild_current_page()
 	queue_redraw()
+
+func _get_float_offset_for_entry(index: int) -> Vector2:
+	var phase = _get_entry_float_index(index) * float_phase_offset
+	var f = _compute_float(phase)
+	return Vector2(f.x, f.y)
+
+func _get_base_bar_rect(index: int, line_y: float) -> Rect2:
+	var layout = _get_entry_layout(index, line_y)
+	if layout.has("bar_rect"):
+		return layout["bar_rect"]
+	return Rect2()
 
 func _input_confirm(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -786,7 +1053,7 @@ func _input_confirm(event: InputEvent) -> void:
 				_confirm_execute(confirm_selected)
 			KEY_ESCAPE:
 				confirming_exit = false
-				_build_current_page()
+				_rebuild_current_page()
 				queue_redraw()
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		for i in range(confirm_rects.size()):
@@ -814,10 +1081,85 @@ func _confirm_execute(index: int) -> void:
 			_exit_to_main_menu()
 		2:
 			confirming_exit = false
-			_build_current_page()
+			_rebuild_current_page()
 			queue_redraw()
 
+# ============================================================
+# BINDING MANAGEMENT
+# ============================================================
+func _input_binding(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE:
+			binding_mode = false
+			rebinding_action = ""
+			_rebuild_current_page()
+			return
+		elif event.keycode == KEY_DELETE or event.keycode == KEY_BACKSPACE:
+			_remove_last_binding(rebinding_action)
+			binding_mode = false
+			rebinding_action = ""
+			_rebuild_current_page()
+			return
+		else:
+			_add_binding(rebinding_action, event)
+			return
+	elif event is InputEventMouseButton and event.pressed:
+		if event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
+			_add_binding(rebinding_action, event)
+	elif event is InputEventJoypadButton and event.pressed:
+		_add_binding(rebinding_action, event)
+	elif event is InputEventJoypadMotion:
+		if abs(event.axis_value) >= 0.5:
+			var ev = InputEventJoypadMotion.new()
+			ev.axis = event.axis
+			ev.axis_value = 1.0 if event.axis_value > 0 else -1.0
+			_add_binding(rebinding_action, ev)
+
+func _add_binding(action: String, event: InputEvent) -> void:
+	if not InputMap.has_action(action):
+		return
+	var current_events = InputMap.action_get_events(action)
+	for e in current_events:
+		if _events_equal(e, event):
+			return
+	InputMap.action_add_event(action, event)
+	GameSettings.dirty = true
+	binding_mode = false
+	rebinding_action = ""
+	_rebuild_current_page()
+
+func _remove_last_binding(action: String) -> void:
+	if not InputMap.has_action(action):
+		return
+	var events = InputMap.action_get_events(action)
+	if events.is_empty():
+		return
+	var last = events[-1]
+	InputMap.action_erase_event(action, last)
+	GameSettings.dirty = true
+
+func _events_equal(a: InputEvent, b: InputEvent) -> bool:
+	if a is InputEventKey and b is InputEventKey:
+		return a.keycode == b.keycode and a.physical_keycode == b.physical_keycode
+	elif a is InputEventMouseButton and b is InputEventMouseButton:
+		return a.button_index == b.button_index
+	elif a is InputEventJoypadButton and b is InputEventJoypadButton:
+		return a.button_index == b.button_index
+	elif a is InputEventJoypadMotion and b is InputEventJoypadMotion:
+		return a.axis == b.axis and sign(a.axis_value) == sign(b.axis_value)
+	return false
+
+# ============================================================
+# DROPDOWN INPUT
+# ============================================================
 func _input_dropdown(event: InputEvent) -> void:
+	var parent_phase = _get_entry_float_index(dropdown_parent_index) * float_phase_offset
+	var f = _compute_float(parent_phase)
+	var offset = Vector2(f.x, f.y)
+	var rot = f.z
+	var tf = Transform2D(rot, offset)
+	var inv_tf = tf.affine_inverse()
+
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
 			KEY_UP:
@@ -830,66 +1172,45 @@ func _input_dropdown(event: InputEvent) -> void:
 				GameSettings.settings[dropdown_target] = dropdown_options[dropdown_selected]
 				GameSettings.dirty = true
 				dropdown_open = false
-				_build_current_page()
+				_rebuild_current_page()
 				queue_redraw()
 			KEY_ESCAPE:
 				dropdown_open = false
-				_build_current_page()
+				_rebuild_current_page()
 				queue_redraw()
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var dd_rect = Rect2(dropdown_anchor, Vector2(size.x - dropdown_anchor.x - padding, dropdown_options.size() * line_height + 10))
-		if dd_rect.has_point(event.position):
-			var rel_y = event.position.y - dropdown_anchor.y - 10
+		var mouse_pos = event.position
+		var local_pos = inv_tf * mouse_pos
+		var dd_rect = _get_dropdown_rect()
+		if dd_rect.has_point(local_pos):
+			var rel_y = local_pos.y - dd_rect.position.y - dropdown_padding
 			var idx = int(rel_y / line_height)
 			if idx >= 0 and idx < dropdown_options.size():
 				GameSettings.settings[dropdown_target] = dropdown_options[idx]
 				GameSettings.dirty = true
 				dropdown_open = false
-				_build_current_page()
+				_rebuild_current_page()
 				queue_redraw()
 		else:
 			dropdown_open = false
-			_build_current_page()
+			_rebuild_current_page()
 			queue_redraw()
 	elif event is InputEventMouseMotion:
-		var dd_rect = Rect2(dropdown_anchor, Vector2(size.x - dropdown_anchor.x - padding, dropdown_options.size() * line_height + 10))
-		if dd_rect.has_point(event.position):
-			var rel_y = event.position.y - dropdown_anchor.y - 10
+		var mouse_pos = event.position
+		var local_pos = inv_tf * mouse_pos
+		var dd_rect = _get_dropdown_rect()
+		if dd_rect.has_point(local_pos):
+			var rel_y = local_pos.y - dd_rect.position.y - dropdown_padding
 			var idx = int(rel_y / line_height)
 			if idx >= 0 and idx < dropdown_options.size() and idx != dropdown_selected:
 				dropdown_selected = idx
 				queue_redraw()
 
-func _input_typing(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		match event.keycode:
-			KEY_ENTER, KEY_KP_ENTER:
-				var value = typed_text.to_int()
-				typed_text = ""
-				typing_mode = false
-				_set_numeric_setting(typing_target, value)
-				_build_current_page()
-				queue_redraw()
-			KEY_ESCAPE:
-				typed_text = ""
-				typing_mode = false
-				_build_current_page()
-				queue_redraw()
-			KEY_BACKSPACE:
-				if typed_text.length() > 0:
-					typed_text = typed_text.substr(0, typed_text.length() - 1)
-					queue_redraw()
-			_:
-				var c = event.as_text_key_label()
-				if c.is_valid_int() or c.is_valid_float():
-					typed_text += c
-					queue_redraw()
-
 func _input_rebind(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
 			awaiting_input = false
-			_build_current_page()
+			_rebuild_current_page()
 			queue_redraw()
 			return
 		_assign_action_event(rebinding_action, event)
@@ -907,10 +1228,7 @@ func _assign_action_event(action: String, event: InputEvent) -> void:
 			InputMap.action_add_event(action, events[i])
 	GameSettings.dirty = true
 	awaiting_input = false
-	if current_page == "controls":
-		_build_controls_page()
-	else:
-		_build_current_page()
+	_rebuild_current_page()
 	queue_redraw()
 
 func _activate_selected() -> void:
@@ -922,24 +1240,22 @@ func _activate_selected() -> void:
 			var key = entry.param
 			GameSettings.settings[key] = not GameSettings.settings.get(key, false)
 			GameSettings.dirty = true
-			_build_current_page()
+			_rebuild_current_page()
 			queue_redraw()
 		"adjust":
-			typing_mode = true
-			typing_target = entry.param
-			typed_text = str(GameSettings.settings.get(entry.param, 0))
-			queue_redraw()
+			pass
 		"cycle":
 			dropdown_open = true
 			dropdown_target = entry.param
 			dropdown_options = entry.options
 			dropdown_selected = entry.options.find(GameSettings.settings.get(entry.param))
+			dropdown_parent_index = selected_index
 			var line_y = padding + line_height * 2 + (selected_index - scroll_offset) * line_height
 			dropdown_anchor = Vector2(padding + 200, line_y + line_height)
 			queue_redraw()
 		"rebind":
+			binding_mode = true
 			rebinding_action = entry.param
-			awaiting_input = true
 			queue_redraw()
 		"reset_keys":
 			_reset_keys_action()
@@ -954,7 +1270,7 @@ func _adjust_option(dir: int) -> void:
 		val = clampi(val + dir, int(entry.min), int(entry.max))
 		GameSettings.settings[key] = val
 		GameSettings.dirty = true
-		_build_current_page()
+		_rebuild_current_page()
 		queue_redraw()
 	elif entry.action == "cycle":
 		var opts = entry.options
@@ -968,26 +1284,15 @@ func _adjust_option(dir: int) -> void:
 			idx = (idx - 1 + opts.size()) % opts.size()
 		GameSettings.settings[entry.param] = opts[idx]
 		GameSettings.dirty = true
-		_build_current_page()
+		_rebuild_current_page()
 		queue_redraw()
-
-func _set_numeric_setting(key: String, value: int) -> void:
-	var entry = null
-	for e in entries:
-		if e.has("param") and e.param == key:
-			entry = e
-			break
-	if entry and entry.has("min") and entry.has("max"):
-		value = clampi(value, int(entry.min), int(entry.max))
-	GameSettings.settings[key] = value
-	GameSettings.dirty = true
 
 func _save_all() -> void:
 	GameSettings.save_settings()
 	GameSettings.save_player_input_map()
 	GameSettings.apply_settings()
 	GameSettings.dirty = false
-	_build_current_page()
+	_rebuild_current_page()
 	queue_redraw()
 
 func _exit_to_main_menu() -> void:
@@ -1012,18 +1317,7 @@ func _get_action_display(action: String) -> String:
 	var events = InputMap.action_get_events(action)
 	if events.is_empty():
 		return "None"
-	var e = events[0]
-	if e is InputEventKey:
-		return OS.get_keycode_string(e.keycode)
-	elif e is InputEventMouseButton:
-		match e.button_index:
-			MOUSE_BUTTON_LEFT: return "Left Mouse"
-			MOUSE_BUTTON_RIGHT: return "Right Mouse"
-			MOUSE_BUTTON_MIDDLE: return "Middle Mouse"
-			_: return "Mouse " + str(e.button_index)
-	elif e is InputEventJoypadButton:
-		return "Joy " + str(e.button_index)
-	return "None"
+	return _get_event_display(events[0])
 
 func _bool_text(label: String, value: bool) -> String:
 	return "%s: [%s]" % [label, "X" if value else " "]

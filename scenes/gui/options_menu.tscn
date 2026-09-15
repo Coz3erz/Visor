@@ -14,3 +14,4 @@ base_glow_color = Color(0.0009500048, 0.22407544, 0.7866309, 1)
 bleed = 4.0
 glow_strength = 0.015
 reveal_speed = 3.0
+dropdown_padding = 24.0

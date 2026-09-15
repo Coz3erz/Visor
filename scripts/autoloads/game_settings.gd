@@ -24,6 +24,7 @@ const DEFAULT_SETTINGS = {
 
 func _ready() -> void:
 	if InputMapDefaults.default_input_map.is_empty():
+		@warning_ignore("static_called_on_instance")
 		InputMapDefaults.capture_defaults()
 	load_settings()
 	saved_settings = settings.duplicate()
@@ -58,42 +59,6 @@ func load_player_input_map() -> void:
 			if events is Array:
 				player_input_map[action] = events
 		apply_player_input_map()
-
-func save_player_input_map() -> void:
-	var cfg = ConfigFile.new()
-	for action in InputMap.get_actions():
-		if action.begins_with("ui_"):
-			continue
-		var events = InputMap.action_get_events(action)
-		var serialized = []
-		for e in events:
-			if e is InputEventKey:
-				serialized.append({"type": "key", "keycode": e.keycode})
-			elif e is InputEventMouseButton:
-				serialized.append({"type": "mouse_button", "button_index": e.button_index})
-		cfg.set_value(action, "events", serialized)
-	cfg.save("user://input_map.cfg")
-	saved_input_map = player_input_map.duplicate()
-	update_dirty()
-
-func apply_player_input_map() -> void:
-	for action in player_input_map.keys():
-		if not InputMap.has_action(action):
-			continue
-		var events = player_input_map[action]
-		if events is Array:
-			InputMap.action_erase_events(action)
-			for e in events:
-				if e is Dictionary:
-					if e.get("type") == "key":
-						var ev = InputEventKey.new()
-						ev.keycode = e.get("keycode")
-						InputMap.action_add_event(action, ev)
-					elif e.get("type") == "mouse_button":
-						var ev = InputEventMouseButton.new()
-						ev.button_index = e.get("button_index")
-						InputMap.action_add_event(action, ev)
-
 func reset_settings_to_default() -> void:
 	settings = DEFAULT_SETTINGS.duplicate()
 	dirty = true
@@ -103,6 +68,7 @@ func reset_settings_to_default() -> void:
 
 func reset_inputs_to_default() -> void:
 	if InputMapDefaults.default_input_map.is_empty():
+		@warning_ignore("static_called_on_instance")
 		InputMapDefaults.capture_defaults()
 	# Erase all current custom events
 	for action in InputMap.get_actions():
@@ -156,3 +122,38 @@ func update_dirty() -> void:
 
 func _linear_to_db(linear: float) -> float:
 	return 20.0 * log(max(linear, 0.0001))
+func save_player_input_map() -> void:
+	var cfg = ConfigFile.new()
+	for action in InputMap.get_actions():
+		if action.begins_with("ui_"):
+			continue
+		var events = InputMap.action_get_events(action)
+		var serialized = []
+		for e in events:
+			if e is InputEventKey:
+				serialized.append({"type": "key", "keycode": e.keycode, "physical_keycode": e.physical_keycode})
+			elif e is InputEventMouseButton:
+				serialized.append({"type": "mouse_button", "button_index": e.button_index})
+		cfg.set_value(action, "events", serialized)
+	cfg.save("user://input_map.cfg")
+	saved_input_map = player_input_map.duplicate()
+	update_dirty()
+
+func apply_player_input_map() -> void:
+	for action in player_input_map.keys():
+		if not InputMap.has_action(action):
+			continue
+		var events = player_input_map[action]
+		if events is Array:
+			InputMap.action_erase_events(action)
+			for e in events:
+				if e is Dictionary:
+					if e.get("type") == "key":
+						var ev = InputEventKey.new()
+						ev.keycode = e.get("keycode", 0)
+						ev.physical_keycode = e.get("physical_keycode", 0)
+						InputMap.action_add_event(action, ev)
+					elif e.get("type") == "mouse_button":
+						var ev = InputEventMouseButton.new()
+						ev.button_index = e.get("button_index")
+						InputMap.action_add_event(action, ev)

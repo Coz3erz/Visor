@@ -24,8 +24,8 @@ buses/default_bus_layout="uid://bsntjcc27kdf2"
 
 [autoload]
 
-CyclopsAutoload="*uid://4siqre3jhe80"
 InputMapDefaults="*uid://cihw5lnk6ya10"
+CyclopsAutoload="*uid://4siqre3jhe80"
 GameSettings="*uid://dsfec5swnucc4"
 SceneManager="*uid://b4g6tq627e4ti"
 
