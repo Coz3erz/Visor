@@ -53,5 +53,5 @@ wave_frequency = 2.0
 wave_speed = 10.0
 wrap_skin = 0.1
 max_wrap_points = 922337203685478016
-aim_indicator_enabled = false
+debug_wraps = true
 release_boost_mult = 0.0
